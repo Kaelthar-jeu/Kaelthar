@@ -205,9 +205,6 @@
 </div>
 
 <script>
-const SUPABASE_URL = 'https://tkdanqduecdnlrbvwfbw.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRrZGFucWR1ZWNkbmxyYnZ3ZmJ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3NDc2MTUsImV4cCI6MjA4ODMyMzYxNX0.untAm90y1Dttp5-CKl7n-wyCECuPlbXQ5yl2nr5kgps';
-
 const G = {
   apiKey:'', joueurId:null,
   p:{ nom:'', classe:'', sig_nom:'', niveau:1, xp:0, xp_req:100,
@@ -228,50 +225,42 @@ const CLASS_STATS = {
 };
 const SIG_MAP = {'Épéiste':'MAÎTRISE','Mage des Failles':'RÉSONANCE','Draconide':'SANG','Rôdeur des Cendres':'OMBRE','Harmoniste':'LIEN'};
 
-// ---- SUPABASE ----
-const SB = (path, opts={}) => fetch(SUPABASE_URL+'/rest/v1/'+path, {
-  headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,...(opts.headers||{})},
-  ...opts
-});
-
-async function dbCreate() {
-  const p = G.p;
-  const r = await SB('joueurs', {method:'POST', headers:{'Prefer':'return=representation'}, body:JSON.stringify({
-    nom:p.nom, classe:p.classe, niveau:1, xp:0, xp_requis:100,
-    force:p.st.force, agilite:p.st.agilite, intelligence:p.st.intelligence,
-    endurance:p.st.endurance, perception:p.st.perception, volonte:p.st.volonte,
-    stat_sig:p.sig, pieces:0, eclats:0, arc:G.arc, acte:G.acte, lieu:G.lieu,
-    choix:[], factions:p.fac, historique:[], derniere_connexion:new Date().toISOString()
-  })});
-  const d = await r.json();
-  return d[0]?.id;
+// ---- SAUVEGARDE LOCALE ----
+function dbCreate() {
+  const key = G.p.nom + '_' + G.p.classe;
+  G.joueurId = key;
+  return key;
 }
 
-async function dbLoad(nom, classe) {
-  const r = await SB(`joueurs?nom=eq.${encodeURIComponent(nom)}&classe=eq.${encodeURIComponent(classe)}&order=derniere_connexion.desc&limit=1`);
-  const d = await r.json();
-  return d[0]||null;
+function dbLoad(nom, classe) {
+  const key = nom + '_' + classe;
+  const saved = localStorage.getItem('kaelthar_' + key);
+  if (!saved) return null;
+  try { return JSON.parse(saved); } catch(e) { return null; }
 }
 
-async function dbSave() {
+function dbSave() {
   if (!G.joueurId) return;
   setSI('saving');
   const p = G.p;
-  await SB(`joueurs?id=eq.${G.joueurId}`, {method:'PATCH', body:JSON.stringify({
+  const data = {
+    id: G.joueurId, nom:p.nom, classe:p.classe,
     niveau:p.niveau, xp:p.xp, xp_requis:p.xp_req,
     force:p.st.force, agilite:p.st.agilite, intelligence:p.st.intelligence,
     endurance:p.st.endurance, perception:p.st.perception, volonte:p.st.volonte,
-    stat_sig:p.sig, pieces:p.pieces, eclats:p.eclats, arc:G.arc, acte:G.acte, lieu:G.lieu,
+    stat_sig:p.sig, pieces:p.pieces, eclats:p.eclats,
+    arc:G.arc, acte:G.acte, lieu:G.lieu,
     choix:p.choix, factions:p.fac, historique:G.history.slice(-20),
     derniere_connexion:new Date().toISOString()
-  })});
+  };
+  localStorage.setItem('kaelthar_' + G.joueurId, JSON.stringify(data));
   setSI('saved');
   setTimeout(()=>setSI('ready'),2000);
 }
 
 function autoSave() {
   if (G.saveTO) clearTimeout(G.saveTO);
-  G.saveTO = setTimeout(dbSave, 2000);
+  G.saveTO = setTimeout(dbSave, 500);
 }
 
 function setSI(s) {
