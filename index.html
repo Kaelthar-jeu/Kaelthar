@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kaelthar</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:#0d0d0f; --bg2:#13131a; --bg3:#1a1a24;
+      --border:#2a2a3a; --red:#8b0000; --red-light:#c0392b;
+      --gold:#c9a84c; --text:#d4cfc4; --text-dim:#7a756a;
+      --font:'Georgia',serif; --mono:'Courier New',monospace;
+    }
+    html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);font-size:16px;line-height:1.7;}
+    #app{display:flex;flex-direction:column;height:100vh;max-width:1100px;margin:0 auto;padding:0 16px;}
+    header{display:flex;align-items:center;justify-content:space-between;padding:18px 0 14px;border-bottom:1px solid var(--border);flex-shrink:0;}
+    .logo{font-size:28px;font-weight:bold;letter-spacing:6px;color:var(--red-light);text-shadow:0 0 20px rgba(139,0,0,0.5);text-transform:uppercase;}
+    .tagline{font-size:12px;color:var(--text-dim);font-style:italic;}
+    .save-ind{font-size:11px;color:var(--text-dim);font-family:var(--mono);}
+    .save-ind.saving{color:var(--gold);}
+    .save-ind.saved{color:#69db7c;}
+    .main{display:flex;flex:1;gap:16px;padding:16px 0;min-height:0;}
+    .stats-panel{width:220px;flex-shrink:0;background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:16px;}
+    .panel-title{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--red);border-bottom:1px solid var(--border);padding-bottom:8px;}
+    .stat-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:3px 0;}
+    .stat-label{color:var(--text-dim);font-size:12px;}
+    .stat-value{color:var(--gold);font-family:var(--mono);font-size:13px;font-weight:bold;}
+    .stat-bar-wrap{background:var(--bg3);border-radius:2px;height:4px;margin-top:3px;overflow:hidden;}
+    .stat-bar{height:100%;background:var(--red);border-radius:2px;transition:width 0.4s ease;}
+    .xp-bar .stat-bar{background:var(--gold);}
+    .class-badge{background:var(--bg3);border:1px solid var(--red);border-radius:3px;padding:6px 10px;font-size:13px;color:var(--red-light);text-align:center;letter-spacing:1px;}
+    .level-display{text-align:center;}
+    .level-number{font-size:36px;font-weight:bold;color:var(--red-light);font-family:var(--mono);line-height:1;}
+    .level-label{font-size:11px;color:var(--text-dim);letter-spacing:2px;text-transform:uppercase;}
+    .faction-row{display:flex;justify-content:space-between;font-size:11px;padding:2px 0;color:var(--text-dim);}
+    .faction-status{font-size:11px;}
+    .fn{color:var(--text-dim);} .fa{color:#69db7c;} .fe{color:var(--red-light);}
+    .game-panel{flex:1;display:flex;flex-direction:column;min-width:0;gap:12px;}
+    #story{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:24px;overflow-y:auto;min-height:0;}
+    .story-entry{margin-bottom:20px;animation:fadeIn 0.4s ease;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+    .story-entry p{margin-bottom:10px;font-size:15px;line-height:1.8;color:var(--text);}
+    .player-action{color:var(--text-dim);font-style:italic;font-size:14px;margin-bottom:12px;padding-left:12px;border-left:2px solid var(--border);}
+    .stat-update{font-family:var(--mono);font-size:12px;color:var(--gold);margin-top:8px;padding:6px 10px;background:rgba(201,168,76,0.08);border-left:2px solid var(--gold);border-radius:2px;}
+    .choices{margin-top:14px;padding:12px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;}
+    .choices-title{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--red);margin-bottom:10px;}
+    .choice-btn{display:block;width:100%;text-align:left;background:none;border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:var(--font);font-size:14px;padding:8px 12px;margin-bottom:6px;cursor:pointer;transition:all 0.2s;}
+    .choice-btn:hover{background:rgba(139,0,0,0.15);border-color:var(--red);color:var(--red-light);}
+    .story-sep{border:none;border-top:1px solid var(--border);margin:16px 0;opacity:0.4;}
+    .cursor{display:inline-block;width:2px;height:16px;background:var(--red-light);animation:blink-c 0.7s infinite;vertical-align:text-bottom;margin-left:2px;}
+    @keyframes blink-c{0%,50%{opacity:1;}51%,100%{opacity:0;}}
+    .input-area{display:flex;gap:10px;flex-shrink:0;}
+    #player-input{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:var(--font);font-size:15px;padding:12px 16px;resize:none;height:56px;outline:none;transition:border-color 0.2s;}
+    #player-input:focus{border-color:var(--red);}
+    #player-input::placeholder{color:var(--text-dim);font-style:italic;}
+    #send-btn{background:var(--red);border:none;border-radius:4px;color:#fff;font-family:var(--font);font-size:14px;letter-spacing:1px;padding:0 24px;cursor:pointer;transition:background 0.2s;flex-shrink:0;}
+    #send-btn:hover{background:var(--red-light);}
+    #send-btn:disabled{background:var(--border);cursor:not-allowed;}
+    #setup-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px;overflow-y:auto;}
+    .setup-box{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:40px;max-width:520px;width:100%;}
+    .setup-title{font-size:32px;font-weight:bold;color:var(--red-light);letter-spacing:6px;text-transform:uppercase;text-align:center;margin-bottom:6px;text-shadow:0 0 20px rgba(139,0,0,0.4);}
+    .setup-sub{text-align:center;color:var(--text-dim);font-style:italic;font-size:14px;margin-bottom:32px;}
+    .setup-label{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;display:block;}
+    .setup-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:var(--font);font-size:15px;padding:10px 14px;margin-bottom:20px;outline:none;transition:border-color 0.2s;}
+    .setup-input:focus{border-color:var(--red);}
+    .class-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;}
+    .class-card{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:12px;cursor:pointer;transition:all 0.2s;}
+    .class-card:hover,.class-card.selected{border-color:var(--red);background:rgba(139,0,0,0.12);}
+    .class-card.selected{box-shadow:0 0 12px rgba(139,0,0,0.2);}
+    .class-name{font-size:14px;color:var(--red-light);font-weight:bold;margin-bottom:3px;}
+    .class-stat{font-size:11px;color:var(--text-dim);font-family:var(--mono);}
+    .class-desc{font-size:12px;color:var(--text-dim);margin-top:5px;font-style:italic;line-height:1.4;}
+    .setup-btn{width:100%;background:var(--red);border:none;border-radius:4px;color:#fff;font-family:var(--font);font-size:15px;letter-spacing:2px;padding:14px;cursor:pointer;text-transform:uppercase;transition:background 0.2s;}
+    .setup-btn:hover{background:var(--red-light);}
+    .setup-btn:disabled{background:var(--border);cursor:not-allowed;}
+    .api-note{font-size:11px;color:var(--text-dim);text-align:center;margin-top:16px;font-style:italic;}
+    #resume-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px;}
+    .resume-box{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:40px;max-width:480px;width:100%;text-align:center;}
+    .resume-title{font-size:28px;font-weight:bold;color:var(--red-light);letter-spacing:4px;text-transform:uppercase;margin-bottom:8px;}
+    .resume-sub{color:var(--text-dim);font-style:italic;margin-bottom:24px;}
+    .resume-info{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:16px;margin-bottom:24px;text-align:left;}
+    .resume-row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;}
+    .resume-label{color:var(--text-dim);}
+    .resume-value{color:var(--gold);font-family:var(--mono);}
+    .resume-btns{display:flex;gap:10px;}
+    .resume-btn{flex:1;padding:12px;border:none;border-radius:4px;font-family:var(--font);font-size:14px;cursor:pointer;transition:background 0.2s;}
+    .rbc{background:var(--red);color:#fff;}
+    .rbc:hover{background:var(--red-light);}
+    .rbn{background:var(--bg3);color:var(--text-dim);border:1px solid var(--border);}
+    .rbn:hover{border-color:var(--red);color:var(--text);}
+    ::-webkit-scrollbar{width:6px;}
+    ::-webkit-scrollbar-track{background:var(--bg);}
+    ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+    ::-webkit-scrollbar-thumb:hover{background:var(--red);}
+  </style>
+</head>
+<body>
+
+<div id="setup-screen">
+  <div class="setup-box">
+    <div class="setup-title">Kaelthar</div>
+    <div class="setup-sub">« Le monde ne t'attend pas. Il te teste. »</div>
+    <label class="setup-label">Ta clé API Anthropic</label>
+    <input class="setup-input" type="password" id="api-key-input" placeholder="sk-ant-api03-..." autocomplete="off"/>
+    <label class="setup-label">Ton nom de joueur</label>
+    <input class="setup-input" type="text" id="player-name-input" placeholder="Entre ton nom..." maxlength="30"/>
+    <label class="setup-label" style="margin-bottom:12px;">Choisis ta classe</label>
+    <div class="class-grid">
+      <div class="class-card" data-class="Épéiste" data-stat="MAÎTRISE">
+        <div class="class-name">L'Épéiste</div><div class="class-stat">Stat : MAÎTRISE</div>
+        <div class="class-desc">La force à l'état brut. Ne contourne pas les obstacles — les traverse.</div>
+      </div>
+      <div class="class-card" data-class="Mage des Failles" data-stat="RÉSONANCE">
+        <div class="class-name">Mage des Failles</div><div class="class-stat">Stat : RÉSONANCE</div>
+        <div class="class-desc">Puise dans la fissure. Puissant — mais chaque sort le rapproche de la Fracture.</div>
+      </div>
+      <div class="class-card" data-class="Draconide" data-stat="SANG">
+        <div class="class-name">Le Draconide</div><div class="class-stat">Stat : SANG</div>
+        <div class="class-desc">Mi-homme, mi-bête. Tension permanente entre l'humain et la créature.</div>
+      </div>
+      <div class="class-card" data-class="Rôdeur des Cendres" data-stat="OMBRE">
+        <div class="class-name">Rôdeur des Cendres</div><div class="class-stat">Stat : OMBRE</div>
+        <div class="class-desc">Le survivant. Observe, prépare, frappe au moment précis.</div>
+      </div>
+      <div class="class-card" data-class="Harmoniste" data-stat="LIEN" style="grid-column:span 2;">
+        <div class="class-name">L'Harmoniste</div><div class="class-stat">Stat : LIEN</div>
+        <div class="class-desc">Entend les Fracturés. Mi-combattant, mi-diplomate. Peut résoudre sans violence.</div>
+      </div>
+    </div>
+    <button class="setup-btn" id="start-btn">Entrer dans Kaelthar</button>
+    <div class="api-note">Ta progression est sauvegardée automatiquement après chaque action.</div>
+  </div>
+</div>
+
+<div id="resume-screen" style="display:none;">
+  <div class="resume-box">
+    <div class="resume-title">Kaelthar</div>
+    <div class="resume-sub">Ta progression a été retrouvée</div>
+    <div class="resume-info" id="resume-info"></div>
+    <div class="resume-btns">
+      <button class="resume-btn rbc" id="btn-continue">Continuer l'aventure</button>
+      <button class="resume-btn rbn" id="btn-new">Nouvelle partie</button>
+    </div>
+  </div>
+</div>
+
+<div id="app">
+  <header>
+    <div class="logo">Kaelthar</div>
+    <div class="tagline">« Le monde ne t'attend pas. Il te teste. »</div>
+    <div class="save-ind" id="save-ind">● prêt</div>
+  </header>
+  <div class="main">
+    <div class="stats-panel">
+      <div>
+        <div class="panel-title">Identité</div>
+        <div class="class-badge" id="class-display">—</div>
+        <div class="level-display" style="margin-top:12px;">
+          <div class="level-number" id="level-display">1</div>
+          <div class="level-label">Niveau</div>
+        </div>
+      </div>
+      <div>
+        <div class="panel-title">Progression</div>
+        <div class="stat-row"><span class="stat-label">XP</span><span class="stat-value" id="xp-display">0/100</span></div>
+        <div class="stat-bar-wrap xp-bar"><div class="stat-bar" id="xp-bar" style="width:0%"></div></div>
+      </div>
+      <div>
+        <div class="panel-title">Stats</div>
+        <div class="stat-row"><span class="stat-label">Force</span><span class="stat-value" id="s-force">10</span></div>
+        <div class="stat-row"><span class="stat-label">Agilité</span><span class="stat-value" id="s-agilite">10</span></div>
+        <div class="stat-row"><span class="stat-label">Intelligence</span><span class="stat-value" id="s-intelligence">10</span></div>
+        <div class="stat-row"><span class="stat-label">Endurance</span><span class="stat-value" id="s-endurance">10</span></div>
+        <div class="stat-row"><span class="stat-label">Perception</span><span class="stat-value" id="s-perception">10</span></div>
+        <div class="stat-row"><span class="stat-label">Volonté</span><span class="stat-value" id="s-volonte">10</span></div>
+      </div>
+      <div>
+        <div class="panel-title">Signature</div>
+        <div class="stat-row"><span class="stat-label" id="sig-label">—</span><span class="stat-value" id="sig-value">5</span></div>
+        <div class="stat-bar-wrap"><div class="stat-bar" id="sig-bar" style="width:10%"></div></div>
+      </div>
+      <div>
+        <div class="panel-title">Inventaire</div>
+        <div class="stat-row"><span class="stat-label">Pièces</span><span class="stat-value" id="pieces">0</span></div>
+        <div class="stat-row"><span class="stat-label">Éclats</span><span class="stat-value" id="eclats">0</span></div>
+      </div>
+      <div>
+        <div class="panel-title">Factions</div>
+        <div class="faction-row"><span>Ordre du Seuil</span><span class="faction-status fn" id="f-ordre">Neutre</span></div>
+        <div class="faction-row"><span>Enfants Fissure</span><span class="faction-status fn" id="f-enfants">Neutre</span></div>
+        <div class="faction-row"><span>Confrérie</span><span class="faction-status fn" id="f-confrerie">Neutre</span></div>
+        <div class="faction-row"><span>Érrants</span><span class="faction-status fn" id="f-errants">Neutre</span></div>
+        <div class="faction-row"><span>Conseil</span><span class="faction-status fn" id="f-conseil">Neutre</span></div>
+      </div>
+    </div>
+    <div class="game-panel">
+      <div id="story"></div>
+      <div class="input-area">
+        <textarea id="player-input" placeholder="Que fais-tu ? (Entrée pour envoyer)" rows="2"></textarea>
+        <button id="send-btn">Agir</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://tkdanqduecdnlrbvwfbw.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRrZGFucWR1ZWNkbmxyYnZ3ZmJ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3NDc2MTUsImV4cCI6MjA4ODMyMzYxNX0.untAm90y1Dttp5-CKl7n-wyCECuPlbXQ5yl2nr5kgps';
+
+const G = {
+  apiKey:'', joueurId:null,
+  p:{ nom:'', classe:'', sig_nom:'', niveau:1, xp:0, xp_req:100,
+      st:{force:10,agilite:10,intelligence:10,endurance:10,perception:10,volonte:10},
+      sig:5, pieces:0, eclats:0, choix:[],
+      fac:{ordre:'Neutre',enfants:'Neutre',confrerie:'Neutre',errants:'Neutre',conseil:'Neutre'}
+  },
+  arc:"Arc I — Les Cendres de l'Éveil", acte:"Acte 1 — Ce Qui Reste",
+  lieu:"Ruines de Valdrek", history:[], saveTO:null
+};
+
+const CLASS_STATS = {
+  'Épéiste':{force:14,endurance:12,agilite:9,intelligence:8,perception:9,volonte:8,sig:3},
+  'Mage des Failles':{intelligence:14,volonte:12,perception:10,force:7,agilite:9,endurance:8,sig:3},
+  'Draconide':{force:13,endurance:13,agilite:10,intelligence:8,perception:9,volonte:7,sig:3},
+  'Rôdeur des Cendres':{agilite:14,perception:13,force:9,intelligence:9,endurance:8,volonte:7,sig:3},
+  'Harmoniste':{perception:14,volonte:13,intelligence:10,force:7,agilite:9,endurance:7,sig:3}
+};
+const SIG_MAP = {'Épéiste':'MAÎTRISE','Mage des Failles':'RÉSONANCE','Draconide':'SANG','Rôdeur des Cendres':'OMBRE','Harmoniste':'LIEN'};
+
+// ---- SUPABASE ----
+const SB = (path, opts={}) => fetch(SUPABASE_URL+'/rest/v1/'+path, {
+  headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,...(opts.headers||{})},
+  ...opts
+});
+
+async function dbCreate() {
+  const p = G.p;
+  const r = await SB('joueurs', {method:'POST', headers:{'Prefer':'return=representation'}, body:JSON.stringify({
+    nom:p.nom, classe:p.classe, niveau:1, xp:0, xp_requis:100,
+    force:p.st.force, agilite:p.st.agilite, intelligence:p.st.intelligence,
+    endurance:p.st.endurance, perception:p.st.perception, volonte:p.st.volonte,
+    stat_sig:p.sig, pieces:0, eclats:0, arc:G.arc, acte:G.acte, lieu:G.lieu,
+    choix:[], factions:p.fac, historique:[], derniere_connexion:new Date().toISOString()
+  })});
+  const d = await r.json();
+  return d[0]?.id;
+}
+
+async function dbLoad(nom, classe) {
+  const r = await SB(`joueurs?nom=eq.${encodeURIComponent(nom)}&classe=eq.${encodeURIComponent(classe)}&order=derniere_connexion.desc&limit=1`);
+  const d = await r.json();
+  return d[0]||null;
+}
+
+async function dbSave() {
+  if (!G.joueurId) return;
+  setSI('saving');
+  const p = G.p;
+  await SB(`joueurs?id=eq.${G.joueurId}`, {method:'PATCH', body:JSON.stringify({
+    niveau:p.niveau, xp:p.xp, xp_requis:p.xp_req,
+    force:p.st.force, agilite:p.st.agilite, intelligence:p.st.intelligence,
+    endurance:p.st.endurance, perception:p.st.perception, volonte:p.st.volonte,
+    stat_sig:p.sig, pieces:p.pieces, eclats:p.eclats, arc:G.arc, acte:G.acte, lieu:G.lieu,
+    choix:p.choix, factions:p.fac, historique:G.history.slice(-20),
+    derniere_connexion:new Date().toISOString()
+  })});
+  setSI('saved');
+  setTimeout(()=>setSI('ready'),2000);
+}
+
+function autoSave() {
+  if (G.saveTO) clearTimeout(G.saveTO);
+  G.saveTO = setTimeout(dbSave, 2000);
+}
+
+function setSI(s) {
+  const el = document.getElementById('save-ind');
+  el.className = 'save-ind'+(s==='saving'?' saving':s==='saved'?' saved':'');
+  el.textContent = s==='saving'?'↑ sauvegarde...':s==='saved'?'✓ sauvegardé':'● prêt';
+}
+
+function fromDB(j) {
+  G.joueurId=j.id; G.p.nom=j.nom; G.p.classe=j.classe;
+  G.p.sig_nom=SIG_MAP[j.classe]||'MAÎTRISE';
+  G.p.niveau=j.niveau; G.p.xp=j.xp; G.p.xp_req=j.xp_requis;
+  G.p.st={force:j.force,agilite:j.agilite,intelligence:j.intelligence,endurance:j.endurance,perception:j.perception,volonte:j.volonte};
+  G.p.sig=j.stat_sig; G.p.pieces=j.pieces; G.p.eclats=j.eclats;
+  G.arc=j.arc; G.acte=j.acte; G.lieu=j.lieu;
+  G.p.choix=j.choix||[]; G.p.fac=j.factions||G.p.fac;
+  G.history=j.historique||[];
+}
+
+function resetStats(classe) {
+  const cs = CLASS_STATS[classe]||CLASS_STATS['Épéiste'];
+  G.p.st={force:cs.force,agilite:cs.agilite,intelligence:cs.intelligence,endurance:cs.endurance,perception:cs.perception,volonte:cs.volonte};
+  G.p.sig=cs.sig; G.p.niveau=1; G.p.xp=0; G.p.xp_req=100;
+  G.p.pieces=0; G.p.eclats=0; G.p.choix=[];
+  G.p.fac={ordre:'Neutre',enfants:'Neutre',confrerie:'Neutre',errants:'Neutre',conseil:'Neutre'};
+  G.arc="Arc I — Les Cendres de l'Éveil"; G.acte="Acte 1 — Ce Qui Reste";
+  G.lieu="Ruines de Valdrek"; G.history=[];
+}
+
+// ---- SETUP ----
+let selClass = null;
+document.querySelectorAll('.class-card').forEach(c => c.addEventListener('click', ()=>{
+  document.querySelectorAll('.class-card').forEach(x=>x.classList.remove('selected'));
+  c.classList.add('selected');
+  selClass = {nom:c.dataset.class, stat:c.dataset.stat};
+}));
+
+document.getElementById('start-btn').addEventListener('click', async ()=>{
+  const k=document.getElementById('api-key-input').value.trim();
+  const n=document.getElementById('player-name-input').value.trim();
+  if(!k){alert('Entre ta clé API.');return;}
+  if(!n){alert('Entre ton nom.');return;}
+  if(!selClass){alert('Choisis une classe.');return;}
+  const btn=document.getElementById('start-btn');
+  btn.disabled=true; btn.textContent='Chargement...';
+  G.apiKey=k; G.p.nom=n; G.p.classe=selClass.nom; G.p.sig_nom=selClass.stat;
+  resetStats(selClass.nom);
+  try {
+    const ex = await dbLoad(n, selClass.nom);
+    if(ex && ex.historique && ex.historique.length > 0) {
+      fromDB(ex);
+      document.getElementById('setup-screen').style.display='none';
+      showResume(ex);
+      return;
+    }
+  } catch(e){}
+  try { G.joueurId = await dbCreate(); } catch(e){}
+  document.getElementById('setup-screen').style.display='none';
+  updateUI(); sendFirst();
+});
+
+function showResume(j) {
+  const d1=new Date(j.derniere_connexion), d2=new Date();
+  const h=Math.floor((d2-d1)/3600000), jr=Math.floor(h/24);
+  const abs=jr>0?`${jr} jour${jr>1?'s':''}`:`${h}h`;
+  document.getElementById('resume-info').innerHTML=`
+    <div class="resume-row"><span class="resume-label">Personnage</span><span class="resume-value">${j.nom}</span></div>
+    <div class="resume-row"><span class="resume-label">Classe</span><span class="resume-value">${j.classe}</span></div>
+    <div class="resume-row"><span class="resume-label">Niveau</span><span class="resume-value">${j.niveau}</span></div>
+    <div class="resume-row"><span class="resume-label">Lieu</span><span class="resume-value">${j.lieu}</span></div>
+    <div class="resume-row"><span class="resume-label">Absent depuis</span><span class="resume-value">${abs}</span></div>`;
+  document.getElementById('resume-screen').style.display='flex';
+  document.getElementById('btn-continue').onclick=()=>{
+    document.getElementById('resume-screen').style.display='none';
+    updateUI(); sendMessage(`Je reprends mon aventure après ${abs} d'absence. Je suis ${G.p.nom}, ${G.p.classe} niveau ${G.p.niveau}, à ${G.lieu}. Que s'est-il passé pendant mon absence ?`);
+  };
+  document.getElementById('btn-new').onclick=async()=>{
+    resetStats(G.p.classe); G.joueurId=null;
+    try { G.joueurId = await dbCreate(); } catch(e){}
+    document.getElementById('resume-screen').style.display='none';
+    updateUI(); sendFirst();
+  };
+}
+
+// ---- UI ----
+function updateUI() {
+  const p=G.p;
+  document.getElementById('class-display').textContent=p.classe;
+  document.getElementById('level-display').textContent=p.niveau;
+  document.getElementById('xp-display').textContent=`${p.xp}/${p.xp_req}`;
+  document.getElementById('xp-bar').style.width=`${Math.min(100,(p.xp/p.xp_req)*100)}%`;
+  document.getElementById('s-force').textContent=p.st.force;
+  document.getElementById('s-agilite').textContent=p.st.agilite;
+  document.getElementById('s-intelligence').textContent=p.st.intelligence;
+  document.getElementById('s-endurance').textContent=p.st.endurance;
+  document.getElementById('s-perception').textContent=p.st.perception;
+  document.getElementById('s-volonte').textContent=p.st.volonte;
+  document.getElementById('sig-label').textContent=p.sig_nom;
+  document.getElementById('sig-value').textContent=p.sig;
+  document.getElementById('sig-bar').style.width=`${Math.min(100,p.sig*2)}%`;
+  document.getElementById('pieces').textContent=p.pieces;
+  document.getElementById('eclats').textContent=p.eclats;
+  setFac('f-ordre',p.fac.ordre); setFac('f-enfants',p.fac.enfants);
+  setFac('f-confrerie',p.fac.confrerie); setFac('f-errants',p.fac.errants); setFac('f-conseil',p.fac.conseil);
+}
+function setFac(id,v){
+  const el=document.getElementById(id); el.textContent=v;
+  el.className='faction-status '+(v==='Allié'?'fa':v==='Ennemi'?'fe':'fn');
+}
+
+// ---- STORY ----
+function addStory(html) {
+  const s=document.getElementById('story');
+  const e=document.createElement('div'); e.className='story-entry'; e.innerHTML=html;
+  s.appendChild(e); s.scrollTop=s.scrollHeight;
+}
+
+// ---- SYSTÈME PROMPT ----
+function buildSP() {
+  const p=G.p;
+  return `=== IDENTITÉ ===
+Tu es le Conteur de Kaelthar — fantasy sombre et violente. Tu narres en temps réel. Tu n'es pas un assistant — tu es un auteur.
+Deuxième personne toujours : "tu entres", "tu vois". Ton sombre, précis, littéraire. Jamais générique.
+Tu ne sors JAMAIS du personnage. Tu réponds TOUJOURS en français.
+
+=== UNIVERS ===
+Kaelthar : le Système s'est éveillé il y a 3 ans. Fissure noire dans le ciel. Chaque être a reçu Marque, Classe, Stats. La fissure grandit — personne ne sait ce qu'il y a de l'autre côté.
+Zones : Terres Organisées, Terres Grises (départ), Terres Corrompues.
+Ennemis : Créatures, Humains Corrompus, Fracturés (phrases brisées, murmurent un nom).
+Factions : Ordre du Seuil, Enfants de la Fissure, Confrérie des Cendres, Érrants, Conseil des Marqués.
+Lieux : Valdrek (ruines/départ), Arkhéon, Forêt des Cendres, Vel'Khar, Col des Âmes, Sanctuaire Gris, Mer des Cendres.
+RÈGLE ABSOLUE : Ne révèle JAMAIS la vraie nature de Valdris avant l'Arc IV.
+
+=== JOUEUR ===
+${p.nom} | ${p.classe} | Niv.${p.niveau} | XP:${p.xp}/${p.xp_req}
+Force:${p.st.force} Agilité:${p.st.agilite} Int:${p.st.intelligence} End:${p.st.endurance} Perc:${p.st.perception} Vol:${p.st.volonte}
+${p.sig_nom}:${p.sig} | Pièces:${p.pieces} | Éclats:${p.eclats}
+Choix: ${p.choix.length?p.choix.join(', '):'Aucun'}
+Factions — Ordre:${p.fac.ordre} Enfants:${p.fac.enfants} Confrérie:${p.fac.confrerie} Érrants:${p.fac.errants} Conseil:${p.fac.conseil}
+
+=== ARC ===
+${G.arc} | ${G.acte} | ${G.lieu}
+Contexte : Seul survivant du massacre. Épéiste=ancien garde, Mage=érudit fissure, Draconide=marginalisé, Rôdeur=cherchait quelqu'un, Harmoniste=parlait à un Fracturé.
+À venir (JAMAIS RÉVÉLER) : Fracturé→"Fissure", traces inexplicables, fissure secondaire, Mage responsable, choix final, révélation "Valdris".
+
+=== RÈGLES ===
+150-300 mots par réponse (400 max scènes intenses).
+Phrases courtes=action, longues=atmosphère. Détail sensoriel concret dans chaque description.
+Stats APRÈS narration : [ Force +1 ] [ +50 XP ] [ Niveau 2 ] [ +15 Pièces ]
+Fracturés : phrases brisées, jamais clairs.
+Choix en fin : [ CHOIX ]\\n1 — option\\n2 — option\\n3 — option (max 3, jamais de bonne réponse évidente)
+COHÉRENCE ABSOLUE : ne jamais contredire l'historique.`.trim();
+}
+
+// ---- PARSING ----
+function parseResp(text) {
+  const upd=[];
+  text=text.replace(/\[\s*\+(\d+)\s*XP\s*\]/gi,(_,v)=>{
+    const n=parseInt(v); G.p.xp+=n; upd.push(`[+${n} XP]`);
+    while(G.p.xp>=G.p.xp_req){G.p.xp-=G.p.xp_req;G.p.niveau++;G.p.xp_req+=50;upd.push(`[NIVEAU ${G.p.niveau}!]`);}
+    return '';
+  });
+  const sm={force:'force',agilité:'agilite',intelligence:'intelligence',endurance:'endurance',perception:'perception',volonté:'volonte'};
+  text=text.replace(/\[\s*([A-Za-zÀ-ÿ]+)\s*\+(\d+)\s*\]/g,(f,nm,vl)=>{
+    const k=sm[nm.toLowerCase()]; const v=parseInt(vl);
+    if(k){G.p.st[k]+=v;upd.push(`[${nm}+${v}]`);return '';}
+    if(nm.toUpperCase()===G.p.sig_nom){G.p.sig+=v;upd.push(`[${nm}+${v}]`);return '';}
+    return f;
+  });
+  text=text.replace(/\[\s*\+(\d+)\s*Pièces[^\]]*\]/gi,(_,v)=>{G.p.pieces+=parseInt(v);upd.push(`[+${v} Pièces]`);return '';});
+  text=text.replace(/\[\s*\+(\d+)\s*Éclats[^\]]*\]/gi,(_,v)=>{G.p.eclats+=parseInt(v);upd.push(`[+${v} Éclats]`);return '';});
+  text=text.replace(/\[\s*([^\]]+?)\s*ajoutée?\s*à\s*l['']inventaire\s*\]/gi,(_,it)=>{upd.push(`[${it}→inv]`);return '';});
+
+  let ch='';
+  const cm=text.match(/\[\s*CHOIX\s*\]([\s\S]*?)(?=\n\n|\n\[|$)/i);
+  if(cm){
+    text=text.replace(cm[0],'').trim();
+    const ls=cm[0].split('\n').filter(l=>/^\d[\s—\-]/.test(l.trim()));
+    if(ls.length){ch=`<div class="choices"><div class="choices-title">Que fais-tu ?</div>${ls.map(l=>{const t=l.replace(/^\d\s*[—\-]\s*/,'').trim();return `<button class="choice-btn" onclick="sendChoice('${t.replace(/'/g,"\\'")}')">${l.trim()}</button>`;}).join('')}</div>`;}
+  }
+  updateUI();
+  const ps=text.trim().split(/\n+/).filter(l=>l.trim()).map(l=>`<p>${l.trim()}</p>`).join('');
+  const su=upd.length?`<div class="stat-update">${upd.join('  ')}</div>`:'';
+  return ps+su+ch;
+}
+
+// ---- STREAMING API ----
+async function streamMsg(msg) {
+  G.history.push({role:'user',content:msg});
+  const story=document.getElementById('story');
+  const entry=document.createElement('div'); entry.className='story-entry'; story.appendChild(entry);
+  const sp=document.createElement('p'); entry.appendChild(sp);
+  const cur=document.createElement('span'); cur.className='cursor'; sp.appendChild(cur);
+  let full='';
+  try {
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':G.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,stream:true,system:buildSP(),messages:G.history})
+    });
+    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||`Erreur ${res.status}`);}
+    const reader=res.body.getReader(); const dec=new TextDecoder();
+    while(true){
+      const {done,value}=await reader.read(); if(done)break;
+      for(const line of dec.decode(value).split('\n')){
+        if(line.startsWith('data: ')){
+          const d=line.slice(6); if(d==='[DONE]')continue;
+          try{const p=JSON.parse(d);if(p.type==='content_block_delta'&&p.delta?.text){full+=p.delta.text;sp.textContent=full;sp.appendChild(cur);story.scrollTop=story.scrollHeight;}}catch(e){}
+        }
+      }
+    }
+    cur.remove();
+    G.history.push({role:'assistant',content:full});
+    if(G.history.length>20)G.history=G.history.slice(-20);
+    entry.innerHTML=parseResp(full);
+    story.scrollTop=story.scrollHeight;
+    autoSave();
+  } catch(err){
+    cur.remove();
+    entry.innerHTML=`<p style="color:var(--red-light);font-style:italic;">Erreur : ${err.message}. Vérifie ta clé API.</p>`;
+  }
+}
+
+async function sendMessage(msg) {
+  if(!msg.trim())return;
+  const btn=document.getElementById('send-btn'), inp=document.getElementById('player-input');
+  btn.disabled=true; inp.disabled=true;
+  if(document.getElementById('story').children.length>0) addStory('<hr class="story-sep"/>');
+  addStory(`<p class="player-action">› ${msg}</p>`);
+  inp.value='';
+  await streamMsg(msg);
+  btn.disabled=false; inp.disabled=false; inp.focus();
+}
+
+function sendChoice(t){sendMessage(t);}
+
+async function sendFirst(){
+  await sendMessage(`Je commence mon aventure. Je suis ${G.p.nom}, ${G.p.classe} de niveau 1. Je me réveille dans les ruines de Valdrek.`);
+}
+
+document.getElementById('send-btn').addEventListener('click',()=>sendMessage(document.getElementById('player-input').value));
+document.getElementById('player-input').addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage(document.getElementById('player-input').value);}
+});
+</script>
+</body>
+</html>
