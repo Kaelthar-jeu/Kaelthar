@@ -201,7 +201,14 @@
         <div class="stat-row"><span class="stat-label">Volonté</span><span class="stat-value" id="s-volonte">10</span></div>
       </div>
       <div>
-        <div class="panel-title">Signature</div>
+        <div class="panel-title">Survie</div>
+        <div class="stat-row"><span class="stat-label">❤ Santé</span><span class="stat-value" id="sv-sante">100</span></div>
+        <div class="stat-bar-wrap"><div class="stat-bar" id="sv-sante-bar" style="width:100%;background:#c0392b;"></div></div>
+        <div class="stat-row" style="margin-top:6px;"><span class="stat-label">🍖 Faim</span><span class="stat-value" id="sv-faim">100</span></div>
+        <div class="stat-bar-wrap"><div class="stat-bar" id="sv-faim-bar" style="width:100%;background:#c9a84c;"></div></div>
+        <div class="stat-row" style="margin-top:6px;"><span class="stat-label">😴 Sommeil</span><span class="stat-value" id="sv-sommeil">100</span></div>
+        <div class="stat-bar-wrap"><div class="stat-bar" id="sv-sommeil-bar" style="width:100%;background:#4a9eda;"></div></div>
+      </div>
         <div class="stat-row"><span class="stat-label" id="sig-label">—</span><span class="stat-value" id="sig-value">5</span></div>
         <div class="stat-bar-wrap"><div class="stat-bar" id="sig-bar" style="width:10%"></div></div>
       </div>
@@ -241,6 +248,7 @@ const G = {
   p:{ nom:'', classe:'', sig_nom:'', niveau:1, xp:0, xp_req:100,
       st:{force:10,agilite:10,intelligence:10,endurance:10,perception:10,volonte:10},
       sig:5, pieces:0, eclats:0, choix:[], inventaire:[],
+      survie:{ faim:100, sante:100, sommeil:100 },
       fac:{ordre:'Neutre',enfants:'Neutre',confrerie:'Neutre',errants:'Neutre',conseil:'Neutre'}
   },
   arc:"Arc I — Les Cendres de l'Éveil", acte:"Acte 1 — Ce Qui Reste",
@@ -281,7 +289,7 @@ function dbSave() {
     endurance:p.st.endurance, perception:p.st.perception, volonte:p.st.volonte,
     stat_sig:p.sig, pieces:p.pieces, eclats:p.eclats,
     arc:G.arc, acte:G.acte, lieu:G.lieu,
-    choix:p.choix, inventaire:p.inventaire||[], factions:p.fac, moments:MOMENTS, historique:G.history.slice(-20),
+    choix:p.choix, inventaire:p.inventaire||[], factions:p.fac, moments:MOMENTS, survie:p.survie, historique:G.history.slice(-20),
     derniere_connexion:new Date().toISOString()
   };
   localStorage.setItem('kaelthar_' + G.joueurId, JSON.stringify(data));
@@ -309,6 +317,7 @@ function fromDB(j) {
   G.arc=j.arc; G.acte=j.acte; G.lieu=j.lieu;
   G.p.choix=j.choix||[]; G.p.inventaire=j.inventaire||[]; G.p.fac=j.factions||G.p.fac;
   if(j.moments) Object.assign(MOMENTS, j.moments);
+  G.p.survie = j.survie || {faim:100,sante:100,sommeil:100};
   G.history=j.historique||[];
 }
 
@@ -317,6 +326,7 @@ function resetStats(classe) {
   G.p.st={force:cs.force,agilite:cs.agilite,intelligence:cs.intelligence,endurance:cs.endurance,perception:cs.perception,volonte:cs.volonte};
   G.p.sig=cs.sig; G.p.niveau=1; G.p.xp=0; G.p.xp_req=100;
   G.p.pieces=0; G.p.eclats=0; G.p.choix=[]; G.p.inventaire=[];
+  G.p.survie={faim:100,sante:100,sommeil:100};
   G.p.fac={ordre:'Neutre',enfants:'Neutre',confrerie:'Neutre',errants:'Neutre',conseil:'Neutre'};
   G.arc="Arc I — Les Cendres de l'Éveil"; G.acte="Acte 1 — Ce Qui Reste";
   G.lieu="Ruines de Valdrek"; G.history=[];
@@ -395,6 +405,17 @@ function updateUI() {
   document.getElementById('sig-bar').style.width=`${Math.min(100,p.sig*2)}%`;
   document.getElementById('pieces').textContent=p.pieces;
   document.getElementById('eclats').textContent=p.eclats;
+  // Survie
+  const sv = p.survie || {faim:100,sante:100,sommeil:100};
+  document.getElementById('sv-sante').textContent=sv.sante;
+  document.getElementById('sv-sante-bar').style.width=sv.sante+'%';
+  document.getElementById('sv-sante-bar').style.background=sv.sante>50?'#c0392b':sv.sante>25?'#e67e22':'#e74c3c';
+  document.getElementById('sv-faim').textContent=sv.faim;
+  document.getElementById('sv-faim-bar').style.width=sv.faim+'%';
+  document.getElementById('sv-faim-bar').style.background=sv.faim>50?'#c9a84c':sv.faim>25?'#e67e22':'#e74c3c';
+  document.getElementById('sv-sommeil').textContent=sv.sommeil;
+  document.getElementById('sv-sommeil-bar').style.width=sv.sommeil+'%';
+  document.getElementById('sv-sommeil-bar').style.background=sv.sommeil>50?'#4a9eda':sv.sommeil>25?'#e67e22':'#e74c3c';
   const invEl=document.getElementById('inv-list');
   if(p.inventaire&&p.inventaire.length){
     invEl.innerHTML=p.inventaire.map(it=>`<div class="inv-item">▸ ${it}</div>`).join('');
@@ -442,7 +463,26 @@ ${G.arc} | ${G.acte} | ${G.lieu}
 Contexte : Seul survivant du massacre. Épéiste=ancien garde, Mage=érudit fissure, Draconide=marginalisé, Rôdeur=cherchait quelqu'un, Harmoniste=parlait à un Fracturé.
 À venir (JAMAIS RÉVÉLER) : Fracturé→"Fissure", traces inexplicables, fissure secondaire, Mage responsable, choix final, révélation "Valdris".
 
-=== RÈGLES ===
+=== SURVIE ===
+Le joueur a des besoins vitaux — Faim, Santé, Sommeil. Chaque action les affecte.
+Faim:${p.survie?p.survie.faim:100}/100 | Santé:${p.survie?p.survie.sante:100}/100 | Sommeil:${p.survie?p.survie.sommeil:100}/100
+RÈGLES SURVIE :
+- Chaque scène consomme des ressources : [ Faim -10 ] [ Sommeil -5 ] selon l'activité
+- Combat : [ Santé -15 à -40 ] selon la difficulté
+- Manger un objet alimentaire : [ Faim +30 ] — si le joueur a de la nourriture dans son inventaire
+- Potion de soin : [ Santé +40 ] — seulement si dans l'inventaire
+- Dormir : [ Sommeil +60 ] MAIS le lieu détermine les risques :
+  * Auberge (coûte 5 pièces) : sécurisé, [ Faim -5 ] [ Sommeil +80 ]
+  * Maison abandonnée : [ Sommeil +50 ] risque 30% d'être attaqué
+  * Rue en ville : [ Sommeil +30 ] risque 40% de vol
+  * Forêt : [ Sommeil +40 ] risque 50% d'attaque ou vol
+  * Terres Corrompues : [ Sommeil +20 ] risque 70% de mort
+- Si Faim <= 20 : le joueur s'affaiblit — propose toujours un choix lié à trouver de la nourriture
+- Si Santé <= 20 : urgence — propose toujours un choix lié à se soigner
+- Si Sommeil <= 20 : hallucinations — la narration devient plus sombre et confuse
+- Si l'une des trois atteint 0 : [ Mort ] — le joueur perd des niveaux et des objets
+
+
 150-300 mots par réponse (400 max scènes intenses).
 Phrases courtes=action, longues=atmosphère. Détail sensoriel concret dans chaque description.
 Stats APRÈS narration : [ Force +1 ] [ +50 XP ] [ Niveau 2 ] [ +15 Pièces ]
@@ -481,8 +521,30 @@ function parseResp(text) {
   });
   text=text.replace(/\[\s*\+(\d+)\s*Pièces[^\]]*\]/gi,(_,v)=>{G.p.pieces+=parseInt(v);upd.push(`[+${v} Pièces]`);return '';});
   text=text.replace(/\[\s*\+(\d+)\s*Éclats[^\]]*\]/gi,(_,v)=>{G.p.eclats+=parseInt(v);upd.push(`[+${v} Éclats]`);return '';});
+  // Parsing survie
+  const svMap = {
+    'faim':['faim','mange','nourri','rassasié'],
+    'sante':['sante','santé','soigné','guéri','blessé','blessure'],
+    'sommeil':['sommeil','dormi','reposé','fatigué','épuisé']
+  };
+  text=text.replace(/\[\s*Faim\s*([+\-])(\d+)\s*\]/gi,(_,op,v)=>{
+    const val=parseInt(v); G.p.survie.faim=Math.max(0,Math.min(100,G.p.survie.faim+(op==='-'?-val:val)));
+    upd.push(`[Faim${op}${val}]`); return '';
+  });
+  text=text.replace(/\[\s*Sant[ée]\s*([+\-])(\d+)\s*\]/gi,(_,op,v)=>{
+    const val=parseInt(v); G.p.survie.sante=Math.max(0,Math.min(100,G.p.survie.sante+(op==='-'?-val:val)));
+    upd.push(`[Santé${op}${val}]`); return '';
+  });
+  text=text.replace(/\[\s*Sommeil\s*([+\-])(\d+)\s*\]/gi,(_,op,v)=>{
+    const val=parseInt(v); G.p.survie.sommeil=Math.max(0,Math.min(100,G.p.survie.sommeil+(op==='-'?-val:val)));
+    upd.push(`[Sommeil${op}${val}]`); return '';
+  });
+  // Vérification mort
+  if(G.p.survie.sante<=0||G.p.survie.faim<=0||G.p.survie.sommeil<=0) {
+    setTimeout(()=>triggerDeath(G.p.survie.sante<=0?'santé':G.p.survie.faim<=0?'faim':'épuisement'),500);
+  }
+  // Parsing inventaire
   text=text.replace(/\[\s*([^\]]+?)\s*ajoutée?\s*à\s*l['']inventaire\s*\]/gi,(_,it)=>{
-    if(!G.p.inventaire)G.p.inventaire=[];
     const item=it.trim();
     if(!G.p.inventaire.includes(item)){G.p.inventaire.push(item);}
     upd.push(`[${item}→inv]`);return '';
@@ -557,6 +619,32 @@ async function sendMessage(msg) {
   btn.disabled=false; inp.disabled=false;
   // Ne pas mettre le focus automatiquement sur mobile pour éviter l'ouverture du clavier
   if(window.innerWidth > 700) inp.focus();
+}
+
+function triggerDeath(cause) {
+  // Perte de niveau et d'objets
+  const niveauPerdu = Math.min(2, G.p.niveau-1);
+  G.p.niveau = Math.max(1, G.p.niveau - niveauPerdu);
+  G.p.xp = 0;
+  // Perte aléatoire d'objets
+  const nbPerdu = Math.floor(G.p.inventaire.length / 2);
+  G.p.inventaire = G.p.inventaire.slice(nbPerdu);
+  // Réinitialise la survie
+  G.p.survie = {faim:30, sante:20, sommeil:30};
+  updateUI();
+  const story = document.getElementById('story');
+  const entry = document.createElement('div');
+  entry.className = 'story-entry';
+  entry.style.borderLeft = '3px solid #e74c3c';
+  entry.style.paddingLeft = '16px';
+  entry.innerHTML = `
+    <p style="color:#e74c3c;font-size:18px;font-weight:bold;letter-spacing:2px;">✖ TU ES MORT</p>
+    <p><em>Cause : ${cause === 'faim' ? 'La faim t\'a consumé de l\'intérieur.' : cause === 'santé' ? 'Tes blessures ont eu raison de toi.' : 'L\'épuisement t\'a terrassé dans ton sommeil.'}</em></p>
+    <p><em>Tu te réveilles à ${G.lieu}. Affaibli. Diminué. Mais vivant.</em></p>
+    <p style="color:var(--gold);font-size:12px;">[ -${niveauPerdu} niveau${niveauPerdu>1?'x':''} ] [ Objets perdus ] [ Survie critique ]</p>`;
+  story.appendChild(entry);
+  story.scrollTop = entry.offsetTop - 20;
+  autoSave();
 }
 
 function toggleInv(){
