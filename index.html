@@ -96,6 +96,12 @@
     ::-webkit-scrollbar-thumb:hover{background:var(--red);}
     .inv-item{font-size:12px;color:var(--text-dim);padding:2px 0;border-bottom:1px solid var(--border);margin-bottom:2px;}
     .inv-item:last-child{border-bottom:none;}
+    .inv-full-item{padding:8px 10px;margin-bottom:6px;background:var(--bg3);border:1px solid var(--border);border-radius:3px;cursor:pointer;transition:border-color 0.2s;}
+    .inv-full-item:hover{border-color:var(--gold);}
+    .inv-full-name{font-size:13px;color:var(--gold);font-weight:bold;}
+    .inv-full-desc{font-size:11px;color:var(--text-dim);margin-top:3px;font-style:italic;display:none;}
+    .inv-full-item.open .inv-full-desc{display:block;}
+    .inv-empty{font-size:12px;color:var(--text-dim);font-style:italic;padding:4px 0;}
     @media(max-width:700px){
       #app{padding:0 8px;}
       .main{flex-direction:column;gap:8px;padding:8px 0;}
@@ -200,10 +206,15 @@
         <div class="stat-bar-wrap"><div class="stat-bar" id="sig-bar" style="width:10%"></div></div>
       </div>
       <div>
-        <div class="panel-title">Inventaire</div>
+        <div class="panel-title" style="cursor:pointer;user-select:none;" onclick="toggleInv()">
+          Inventaire <span id="inv-toggle" style="float:right;color:var(--gold);">▼</span>
+        </div>
         <div class="stat-row"><span class="stat-label">Pièces</span><span class="stat-value" id="pieces">0</span></div>
         <div class="stat-row"><span class="stat-label">Éclats</span><span class="stat-value" id="eclats">0</span></div>
         <div id="inv-list" style="margin-top:6px;"></div>
+        <div id="inv-panel" style="display:none;margin-top:8px;">
+          <div id="inv-items-full" style="font-size:13px;color:var(--text);"></div>
+        </div>
       </div>
       <div>
         <div class="panel-title">Factions</div>
@@ -543,6 +554,26 @@ async function sendMessage(msg) {
   inp.value='';
   await streamMsg(msg);
   btn.disabled=false; inp.disabled=false; inp.focus();
+}
+
+function toggleInv(){
+  const panel=document.getElementById('inv-panel');
+  const toggle=document.getElementById('inv-toggle');
+  const open=panel.style.display==='none';
+  panel.style.display=open?'block':'none';
+  toggle.textContent=open?'▲':'▼';
+  if(open) renderInvFull();
+}
+
+function renderInvFull(){
+  const el=document.getElementById('inv-items-full');
+  const inv=G.p.inventaire||[];
+  if(!inv.length){el.innerHTML='<div class="inv-empty">Aucun objet pour l\'instant.</div>';return;}
+  el.innerHTML=inv.map(it=>`
+    <div class="inv-full-item" onclick="this.classList.toggle('open')">
+      <div class="inv-full-name">▸ ${it}</div>
+      <div class="inv-full-desc">Objet trouvé durant ton aventure.</div>
+    </div>`).join('');
 }
 
 function sendChoice(t){sendMessage(t);}
