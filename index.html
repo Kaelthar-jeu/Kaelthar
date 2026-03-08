@@ -281,7 +281,7 @@ function dbSave() {
     endurance:p.st.endurance, perception:p.st.perception, volonte:p.st.volonte,
     stat_sig:p.sig, pieces:p.pieces, eclats:p.eclats,
     arc:G.arc, acte:G.acte, lieu:G.lieu,
-    choix:p.choix, inventaire:p.inventaire||[], factions:p.fac, historique:G.history.slice(-20),
+    choix:p.choix, inventaire:p.inventaire||[], factions:p.fac, moments:MOMENTS, historique:G.history.slice(-20),
     derniere_connexion:new Date().toISOString()
   };
   localStorage.setItem('kaelthar_' + G.joueurId, JSON.stringify(data));
@@ -308,6 +308,7 @@ function fromDB(j) {
   G.p.sig=j.stat_sig; G.p.pieces=j.pieces; G.p.eclats=j.eclats;
   G.arc=j.arc; G.acte=j.acte; G.lieu=j.lieu;
   G.p.choix=j.choix||[]; G.p.inventaire=j.inventaire||[]; G.p.fac=j.factions||G.p.fac;
+  if(j.moments) Object.assign(MOMENTS, j.moments);
   G.history=j.historique||[];
 }
 
@@ -468,7 +469,7 @@ function parseResp(text) {
   const upd=[];
   text=text.replace(/\[\s*\+(\d+)\s*XP\s*\]/gi,(_,v)=>{
     const n=parseInt(v); G.p.xp+=n; upd.push(`[+${n} XP]`);
-    while(G.p.xp>=G.p.xp_req){G.p.xp-=G.p.xp_req;G.p.niveau++;G.p.xp_req+=50;upd.push(`[NIVEAU ${G.p.niveau}!]`);}
+    while(G.p.xp>=G.p.xp_req){G.p.xp-=G.p.xp_req;G.p.niveau++;G.p.xp_req+=50;upd.push(`[NIVEAU ${G.p.niveau}!]`); setTimeout(()=>checkMoments(),800);}
     return '';
   });
   const sm={force:'force',agilité:'agilite',intelligence:'intelligence',endurance:'endurance',perception:'perception',volonté:'volonte'};
@@ -576,6 +577,110 @@ function renderInvFull(){
       <div class="inv-full-name">▸ ${it}</div>
       <div class="inv-full-desc">Objet trouvé durant ton aventure.</div>
     </div>`).join('');
+}
+
+// ---- MOMENTS NARRATIFS FIXES ----
+const MOMENTS = {
+  m1_done: false, // Niveau 5 — première voix de Valdris
+  m2_done: false, // Niveau 10 — découverte du nom
+  m3_done: false, // Niveau 20 — Salle des Mondes
+  m4a_done: false, // Arc IV — le Fracturé
+  m4b_done: false, // Arc IV — la bague
+  m5_done: false, // Niveau 45 — choix final
+};
+
+function checkMoments() {
+  const niv = G.p.niveau;
+  if(niv >= 5 && !MOMENTS.m1_done) { MOMENTS.m1_done=true; triggerMoment(1); return true; }
+  if(niv >= 10 && !MOMENTS.m2_done) { MOMENTS.m2_done=true; triggerMoment(2); return true; }
+  if(niv >= 20 && !MOMENTS.m3_done) { MOMENTS.m3_done=true; triggerMoment(3); return true; }
+  if(niv >= 30 && !MOMENTS.m4a_done) { MOMENTS.m4a_done=true; triggerMoment(4); return true; }
+  if(niv >= 35 && !MOMENTS.m4b_done) { MOMENTS.m4b_done=true; triggerMoment(5); return true; }
+  if(niv >= 45 && !MOMENTS.m5_done) { MOMENTS.m5_done=true; triggerMoment(6); return true; }
+  return false;
+}
+
+function triggerMoment(n) {
+  const scenes = {
+    1: `<p><em>La Salle des Échos est silencieuse.</em></p>
+<p><em>Les pas résonnent contre les pierres anciennes. Les torches vacillent sans raison. Quelque chose change dans l'air — une pression légère, comme si la salle retenait son souffle.</em></p>
+<p><em>Puis.</em></p>
+<p><em>Un murmure. Si bas qu'il pourrait ne pas exister.</em></p>
+<p style="color:var(--red-light);font-weight:bold;"><em>« Si le Système t'a éveillé... qui a éveillé le Système ? »</em></p>
+<p><em>Pas d'écho. Pas de source. Juste ces mots suspendus dans ta tête comme une épine qu'on ne peut pas retirer.</em></p>
+<p><em>Le Système ne réagit pas. Aucune notification. Aucune quête.</em></p>
+<p><em>Comme si lui aussi n'avait pas entendu.</em></p>`,
+
+    2: `<p><em>Au cœur des ruines — sur une pierre ancienne, à moitié enfouie.</em></p>
+<p><em>Un seul mot. Gravé profondément, comme par quelqu'un qui n'avait qu'une seule chance de laisser un message.</em></p>
+<p style="color:var(--red-light);font-size:22px;font-weight:bold;letter-spacing:4px;">VALDRIS</p>
+<p><em>Le Système se tait. Aucune notification. Aucune quête.</em></p>
+<p><em>Juste ce nom. Et au-dessus de toi, dans le ciel — la fissure qui pulse, très légèrement.</em></p>
+<p><em>Comme si elle avait entendu.</em></p>`,
+
+    3: `<p><em>La salle s'ouvre sans bruit. Pas par toi. Pas par le Conseil.</em></p>
+<p><em>Par quelqu'un d'autre.</em></p>
+<p><em>Les murs sont couverts de noms. Des dizaines. Des centaines peut-être. Tu cherches Kaelthar des yeux.</em></p>
+<p><em>Tu le trouves.</em></p>
+<p style="color:var(--gold);font-weight:bold;"><em>Ni fermé. Ni ouvert. En attente.</em></p>
+<p><em>Puis la voix. Basse. Lente. Comme quelqu'un qui n'a pas parlé depuis très longtemps.</em></p>
+<p style="color:var(--red-light);font-weight:bold;"><em>« Tu es venu. Je savais que quelqu'un viendrait. Je ne savais pas que ça prendrait aussi longtemps. »</em></p>
+<p><em>Un silence.</em></p>
+<p style="color:var(--red-light);font-weight:bold;"><em>« Je ne te veux aucun mal. Je suis juste... fatigué. »</em></p>
+<p><em>La voix disparaît. La salle reste. Et sur le mur — le nom de Kaelthar pulse, très doucement. Comme s'il respirait.</em></p>`,
+
+    4: `<p><em>Il est assis contre le mur. Immobile. Les yeux ouverts sur quelque chose que toi tu ne peux pas voir.</em></p>
+<p><em>Tu t'approches. Il ne réagit pas.</em></p>
+<p><em>Puis — une voix. Brisée. Répétitive.</em></p>
+<p style="color:var(--red-light);font-weight:bold;"><em>« Fissure... il l'a ouverte... pas un accident... il savait... il savait ce qu'il faisait... »</em></p>
+<p><em>Silence.</em></p>
+<p style="color:var(--red-light);font-weight:bold;"><em>« Valdrek... Valdrek devait... devait disparaître... pour que ça s'ouvre... »</em></p>
+<p><em>Il tourne la tête vers toi. Ses yeux sont vides.</em></p>
+<p style="color:var(--red-light);font-weight:bold;"><em>« Tu cherches la vérité ? Elle brûle. Tout brûle. Il a tout brûlé. »</em></p>
+<p><em>Puis plus rien. Comme s'il n'avait jamais parlé.</em></p>`,
+
+    5: `<p><em>La bague est froide dans ta main.</em></p>
+<p><em>Puis tout disparaît.</em></p>
+<p><em>Tu es là — mais tu n'es plus toi. Tu regardes sans corps, sans voix. Témoin de quelque chose qui s'est passé bien avant ton Éveil.</em></p>
+<p><em>Un homme. Seul. Au centre de Valdrek.</em></p>
+<p><em>Il murmure des mots que tu ne comprends pas. Ses mains tremblent — mais il n'avait pas peur. C'était autre chose. C'était de l'excitation.</em></p>
+<p><em>Devant lui — une fissure dans le sol. Petite. Ouverte de force.</em></p>
+<p><em>Et à ses pieds — quelqu'un. Immobile.</em></p>
+<p><em>L'homme lève les yeux vers le ciel. La fissure pulse — une fois, fort.</em></p>
+<p><em>Il sourit.</em></p>
+<p style="color:var(--red-light);font-weight:bold;"><em>« Ça a fonctionné. »</em></p>
+<p><em>La bague tombe de ta main. Tu es de nouveau dans le présent.</em></p>
+<p><em>Tu sais maintenant. Ce n'était pas un accident. Quelqu'un a voulu ça.</em></p>`,
+
+    6: `<p><em>Il est là.</em></p>
+<p><em>Tu t'attendais à un monstre. A un dieu. A quelque chose d'immense.</em></p>
+<p><em>C'est un vieil homme.</em></p>
+<p><em>Enfin — presque. Sa silhouette tremble légèrement, comme une image vue à travers de l'eau. Les contours de son corps refusent de se fixer. Vieux, oui. Mais pas tout à fait réel.</em></p>
+<p><em>Il te regarde. Ses yeux, eux, sont parfaitement nets.</em></p>
+<p style="color:var(--red-light);font-weight:bold;"><em>« Tu es arrivé jusqu'ici. »</em></p>
+<p><em>Pas une question. Juste un constat. La voix que tu avais entendue avant — fatiguée, douce — mais cette fois plus proche. Plus réelle.</em></p>
+<p style="color:var(--red-light);font-weight:bold;"><em>« Je ne t'obligerai à rien. Je t'ai attendu trop longtemps pour ça. »</em></p>
+<p><em>Il lève la main vers la fissure au-dessus de vous.</em></p>
+<p style="color:var(--red-light);font-weight:bold;"><em>« Tu sais ce que c'est maintenant. Tu sais ce que je suis. »</em></p>
+<p><em>Un silence.</em></p>
+<p style="color:var(--red-light);font-weight:bold;"><em>« Alors. Qu'est-ce que tu choisis ? »</em></p>`
+  };
+
+  const story = document.getElementById('story');
+  if(story.children.length > 0) {
+    const sep = document.createElement('div');
+    sep.className = 'story-entry';
+    sep.innerHTML = '<hr class="story-sep"/>';
+    story.appendChild(sep);
+  }
+  const entry = document.createElement('div');
+  entry.className = 'story-entry';
+  entry.style.borderLeft = '2px solid var(--red)';
+  entry.style.paddingLeft = '16px';
+  entry.innerHTML = scenes[n];
+  story.appendChild(entry);
+  story.scrollTop = entry.offsetTop - 20;
+  autoSave();
 }
 
 function sendChoice(t){sendMessage(t);}
