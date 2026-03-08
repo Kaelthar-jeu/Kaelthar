@@ -199,6 +199,7 @@
         <div class="stat-row"><span class="stat-label">Endurance</span><span class="stat-value" id="s-endurance">10</span></div>
         <div class="stat-row"><span class="stat-label">Perception</span><span class="stat-value" id="s-perception">10</span></div>
         <div class="stat-row"><span class="stat-label">Volonté</span><span class="stat-value" id="s-volonte">10</span></div>
+        <div class="stat-bar-wrap"><div class="stat-bar" id="s-volonte-bar" style="width:20%"></div></div>
       </div>
       <div>
         <div class="panel-title">Survie</div>
@@ -400,6 +401,11 @@ function updateUI() {
   document.getElementById('s-endurance').textContent=p.st.endurance;
   document.getElementById('s-perception').textContent=p.st.perception;
   document.getElementById('s-volonte').textContent=p.st.volonte;
+  // Barres de stats (max estimé 20)
+  ['force','agilite','intelligence','endurance','perception','volonte'].forEach(s=>{
+    const bar=document.getElementById('s-'+s+'-bar');
+    if(bar) bar.style.width=Math.min(100,(p.st[s]/20)*100)+'%';
+  });
   document.getElementById('sig-label').textContent=p.sig_nom;
   document.getElementById('sig-value').textContent=p.sig;
   document.getElementById('sig-bar').style.width=`${Math.min(100,p.sig*2)}%`;
