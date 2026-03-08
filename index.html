@@ -21,7 +21,7 @@
     .save-ind.saving{color:var(--gold);}
     .save-ind.saved{color:#69db7c;}
     .main{display:flex;flex:1;gap:16px;padding:16px 0;min-height:0;}
-    .stats-panel{width:220px;flex-shrink:0;background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:16px;}
+    .stats-panel{width:220px;flex-shrink:0;background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:16px;position:sticky;top:0;max-height:calc(100vh - 80px);}
     .panel-title{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--red);border-bottom:1px solid var(--border);padding-bottom:8px;}
     .stat-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:3px 0;}
     .stat-label{color:var(--text-dim);font-size:12px;}
