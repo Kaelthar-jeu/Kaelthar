@@ -553,7 +553,9 @@ async function sendMessage(msg) {
   addStory(`<p class="player-action">› ${msg}</p>`);
   inp.value='';
   await streamMsg(msg);
-  btn.disabled=false; inp.disabled=false; inp.focus();
+  btn.disabled=false; inp.disabled=false;
+  // Ne pas mettre le focus automatiquement sur mobile pour éviter l'ouverture du clavier
+  if(window.innerWidth > 700) inp.focus();
 }
 
 function toggleInv(){
