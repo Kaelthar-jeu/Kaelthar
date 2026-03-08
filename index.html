@@ -64,7 +64,8 @@
     .setup-label{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;display:block;}
     .setup-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:var(--font);font-size:15px;padding:10px 14px;margin-bottom:20px;outline:none;transition:border-color 0.2s;}
     .setup-input:focus{border-color:var(--red);}
-    .class-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;}
+    .class-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;align-items:stretch;}
+    .class-card{display:flex;flex-direction:column;}
     .class-card{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:12px;cursor:pointer;transition:all 0.2s;}
     .class-card:hover,.class-card.selected{border-color:var(--red);background:rgba(139,0,0,0.12);}
     .class-card.selected{box-shadow:0 0 12px rgba(139,0,0,0.2);}
