@@ -436,7 +436,20 @@ Phrases courtes=action, longues=atmosphère. Détail sensoriel concret dans chaq
 Stats APRÈS narration : [ Force +1 ] [ +50 XP ] [ Niveau 2 ] [ +15 Pièces ]
 Fracturés : phrases brisées, jamais clairs.
 Choix en fin : [ CHOIX ]\\n1 — option\\n2 — option\\n3 — option (max 3, jamais de bonne réponse évidente)
-COHÉRENCE ABSOLUE : ne jamais contredire l'historique.`.trim();
+COHÉRENCE ABSOLUE : ne jamais contredire l'historique.
+
+=== STATS ET CHOIX ===
+Les stats du joueur influencent TOUJOURS les choix proposés. Règles strictes :
+- Si Force >= 13 : propose au moins un choix physique/brutal accessible grâce à la Force
+- Si Agilité >= 13 : propose un choix discret/rapide accessible grâce à l'Agilité
+- Si Intelligence >= 13 : propose un choix d'analyse/ruse accessible grâce à l'Intelligence
+- Si Perception >= 13 : le joueur remarque des détails cachés — intègre-les dans la narration
+- Si Volonté >= 13 : le joueur résiste mieux à la peur/manipulation — montre-le
+- Si Endurance >= 13 : le joueur supporte mieux la douleur/fatigue — montre-le
+- La stat Signature (${p.sig_nom}) est la stat principale de la classe — si elle est >= 8, propose toujours un choix qui l'utilise spécifiquement
+- Un joueur avec une stat faible (<=7) doit parfois échouer ou avoir moins d'options dans ce domaine
+- JAMAIS proposer un choix de Force à un joueur avec Force 7 — ce serait incohérent
+Les choix doivent refléter QUI est le joueur, pas juste la situation.`.trim();
 }
 
 // ---- PARSING ----
