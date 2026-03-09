@@ -239,6 +239,11 @@
         <div class="faction-row"><span>Érrants</span><span class="faction-status fn" id="f-errants">Neutre</span></div>
         <div class="faction-row"><span>Conseil</span><span class="faction-status fn" id="f-conseil">Neutre</span></div>
       </div>
+      <div>
+        <button onclick="passerPremium()" style="width:100%;padding:12px;background:linear-gradient(135deg,#8B0000,#c9a84c);color:#fff;border:none;border-radius:4px;font-family:Georgia,serif;font-size:14px;font-weight:bold;cursor:pointer;letter-spacing:1px;margin-top:8px;">
+          ⚔ Passer Premium<br><span style="font-size:11px;font-weight:normal;">7€ / mois</span>
+        </button>
+      </div>
     </div>
     <div class="game-panel">
       <div id="story"></div>
@@ -634,6 +639,26 @@ async function sendMessage(msg) {
   btn.disabled=false; inp.disabled=false;
   // Ne pas mettre le focus automatiquement sur mobile pour éviter l'ouverture du clavier
   if(window.innerWidth > 700) inp.focus();
+}
+
+async function passerPremium() {
+  const btn = document.querySelector('button[onclick="passerPremium()"]');
+  btn.textContent = 'Chargement...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('/api/stripe', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ priceId: 'price_1T8zzeCMqtZv004INHSIAnLj' })
+    });
+    const data = await res.json();
+    if(data.url) window.location.href = data.url;
+    else throw new Error(data.error);
+  } catch(e) {
+    btn.innerHTML = '⚔ Passer Premium<br><span style="font-size:11px;font-weight:normal;">7€ / mois</span>';
+    btn.disabled = false;
+    alert('Erreur de paiement. Réessaie.');
+  }
 }
 
 function triggerDeath(cause) {
