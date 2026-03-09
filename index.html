@@ -652,12 +652,15 @@ async function passerPremium() {
       body: JSON.stringify({ priceId: 'price_1T8zzeCMqtZv004INHSIAnLj' })
     });
     const data = await res.json();
-    if(data.url) window.location.href = data.url;
-    else throw new Error(data.error);
+    if(data.url) {
+      window.location.href = data.url;
+    } else {
+      throw new Error(data.error || 'Erreur inconnue');
+    }
   } catch(e) {
+    alert('Erreur : ' + e.message);
     btn.innerHTML = '⚔ Passer Premium<br><span style="font-size:11px;font-weight:normal;">7€ / mois</span>';
     btn.disabled = false;
-    alert('Erreur de paiement. Réessaie.');
   }
 }
 
