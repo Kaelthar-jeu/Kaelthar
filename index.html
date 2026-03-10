@@ -96,6 +96,10 @@
     ::-webkit-scrollbar-thumb:hover{background:var(--red);}
     .inv-item{font-size:12px;color:var(--text-dim);padding:2px 0;border-bottom:1px solid var(--border);margin-bottom:2px;}
     .inv-item:last-child{border-bottom:none;}
+    .inv-use-btn{background:var(--red);color:#fff;border:none;border-radius:3px;padding:3px 10px;font-size:11px;cursor:pointer;font-family:var(--font);margin-top:4px;transition:background 0.2s;}
+    .inv-use-btn:hover{background:var(--red-light);}
+    .inv-full-item{padding:6px 0;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:2px;}
+    .inv-full-item:last-child{border-bottom:none;}
     .inv-full-item{padding:8px 10px;margin-bottom:6px;background:var(--bg3);border:1px solid var(--border);border-radius:3px;cursor:pointer;transition:border-color 0.2s;}
     .inv-full-item:hover{border-color:var(--gold);}
     .inv-full-name{font-size:13px;color:var(--gold);font-weight:bold;}
@@ -511,7 +515,13 @@ RÈGLES SURVIE STRICTES :
 
 
 === INVENTAIRE ===
-RÈGLE ABSOLUE : Quand le joueur obtient un objet, tu DOIS écrire exactement : [ NomObjet ajouté à l'inventaire ]
+RÈGLE ABSOLUE : Quand le joueur dit "J'utilise [objet]", tu DOIS :
+1. Narrer l'utilisation de façon cohérente avec le contexte et l'objet
+2. Appliquer les effets logiques : nourriture → [ Faim +40 ], potion de soin → [ Santé +40 ], poison sur ennemi → combat, etc.
+3. Toujours écrire [ NomObjet retiré de l'inventaire ] après utilisation
+4. Si l'objet ne peut pas être utilisé dans ce contexte précis, expliquer pourquoi de façon narrative
+
+
 RÈGLE ABSOLUE : Quand le joueur consomme un objet, tu DOIS écrire exactement : [ NomObjet retiré de l'inventaire ]
 Ne jamais inventer d'autres formats. Toujours utiliser ces formats exacts.
 Exemples corrects :
@@ -719,10 +729,21 @@ function renderInvFull(){
   const inv=G.p.inventaire||[];
   if(!inv.length){el.innerHTML='<div class="inv-empty">Aucun objet pour l\'instant.</div>';return;}
   el.innerHTML=inv.map(it=>`
-    <div class="inv-full-item" onclick="this.classList.toggle('open')">
+    <div class="inv-full-item">
       <div class="inv-full-name">▸ ${it}</div>
-      <div class="inv-full-desc">Objet trouvé durant ton aventure.</div>
+      <button class="inv-use-btn" onclick="utiliserObjet('${it.replace(/'/g,"\\'")}')">Utiliser</button>
     </div>`).join('');
+}
+
+function utiliserObjet(objet) {
+  if(G.streaming) return;
+  // Ferme le panneau inventaire
+  const panel = document.getElementById('inv-panel');
+  if(panel) panel.style.display='none';
+  const toggle = document.getElementById('inv-toggle');
+  if(toggle) toggle.textContent='▼';
+  // Envoie l'action à l'IA
+  sendChoice(`J'utilise ${objet} de mon inventaire.`);
 }
 
 // ---- MOMENTS NARRATIFS FIXES ----
