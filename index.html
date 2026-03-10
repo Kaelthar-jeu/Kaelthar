@@ -474,11 +474,13 @@ Lieux : Valdrek (ruines/départ), Arkhéon, Forêt des Cendres, Vel'Khar, Col de
 RÈGLE ABSOLUE : Ne révèle JAMAIS la vraie nature de Valdris avant l'Arc IV.
 RÈGLE ABSOLUE : Le joueur ne peut JAMAIS devenir Valdris, jouer Valdris, ou fusionner avec Valdris. Valdris est une entité distincte et mystérieuse. Si le joueur essaie, refuse et redirige l'histoire.
 RÈGLE ABSOLUE : Ne propose JAMAIS un choix qui permettrait au joueur de devenir une autre entité que son personnage.
+RÈGLE ABSOLUE : Ne mentionne JAMAIS le nom "Valdris" dans tes réponses ou dans tes choix proposés avant le Niveau 5. Ne pose JAMAIS de question au joueur sur Valdris. Si le joueur mentionne Valdris, réponds avec mystère sans confirmer ni infirmer.
 
 === JOUEUR ===
 ${p.nom} | ${p.classe} | Niv.${p.niveau} | XP:${p.xp}/${p.xp_req}
 Force:${p.st.force} Agilité:${p.st.agilite} Int:${p.st.intelligence} End:${p.st.endurance} Perc:${p.st.perception} Vol:${p.st.volonte}
 ${p.sig_nom}:${p.sig} | Pièces:${p.pieces} | Éclats:${p.eclats}
+Inventaire actuel : ${p.inventaire&&p.inventaire.length?p.inventaire.join(', '):'Vide'}
 Choix: ${p.choix.length?p.choix.join(', '):'Aucun'}
 Factions — Ordre:${p.fac.ordre} Enfants:${p.fac.enfants} Confrérie:${p.fac.confrerie} Érrants:${p.fac.errants} Conseil:${p.fac.conseil}
 
@@ -490,24 +492,34 @@ Contexte : Seul survivant du massacre. Épéiste=ancien garde, Mage=érudit fiss
 === SURVIE ===
 Le joueur a des besoins vitaux — Faim, Santé, Sommeil. Chaque action les affecte.
 Faim:${p.survie?p.survie.faim:100}/100 | Santé:${p.survie?p.survie.sante:100}/100 | Sommeil:${p.survie?p.survie.sommeil:100}/100
-RÈGLES SURVIE :
-- Chaque scène consomme des ressources : [ Faim -10 ] [ Sommeil -5 ] selon l'activité
-- Combat : [ Santé -15 à -40 ] selon la difficulté
-- Manger un objet alimentaire : [ Faim +30 ] — si le joueur a de la nourriture dans son inventaire
-- Potion de soin : [ Santé +40 ] — seulement si dans l'inventaire
-- Dormir : [ Sommeil +60 ] MAIS le lieu détermine les risques :
-  * Auberge (coûte 5 pièces) : sécurisé, [ Faim -5 ] [ Sommeil +80 ]
-  * Maison abandonnée : [ Sommeil +50 ] risque 30% d'être attaqué
-  * Rue en ville : [ Sommeil +30 ] risque 40% de vol
-  * Forêt : [ Sommeil +40 ] risque 50% d'attaque ou vol
-  * Terres Corrompues : [ Sommeil +20 ] risque 70% de mort
-- Si Faim <= 20 : le joueur s'affaiblit — propose toujours un choix lié à trouver de la nourriture
-- Si Santé <= 20 : urgence — propose toujours un choix lié à se soigner
-- Si Sommeil <= 20 : hallucinations — la narration devient plus sombre et confuse
-- Si l'une des trois atteint 0 : [ Mort ] — le joueur perd des niveaux et des objets
+Inventaire pour survie : ${p.inventaire&&p.inventaire.length?p.inventaire.join(', '):'Vide'}
+
+RÈGLES SURVIE STRICTES :
+- Chaque scène : [ Faim -5 ] [ Sommeil -3 ] maximum par scène — jamais plus sans raison narrative
+- Combat difficile : [ Santé -15 ] maximum sauf mort certaine narrative
+- RÈGLE ABSOLUE SURVIE : Si le joueur a de la nourriture dans son inventaire, il ne peut PAS mourir de faim. L'IA doit automatiquement lui faire consommer sa nourriture avant que la faim atteigne 0.
+- RÈGLE ABSOLUE SURVIE : Si le joueur vient de manger ou de dormir dans la même scène, la Faim et le Sommeil ne peuvent PAS descendre en dessous de 50 dans cette même scène.
+- RÈGLE ABSOLUE SURVIE : La Faim et le Sommeil ne peuvent jamais perdre plus de 20 points par scène. Si le contexte est calme (repas, sommeil, repos), ces valeurs AUGMENTENT.
+- Manger (nourriture dans inventaire) : [ Faim +40 ] et retire l'objet de l'inventaire avec [ NomObjet retiré de l'inventaire ]
+- Potion de soin (dans inventaire) : [ Santé +40 ] et retire l'objet
+- Dormir en sécurité (cabane, auberge, maison) : [ Sommeil +60 ] [ Faim -5 ]
+- Dormir dehors (forêt, rue) : [ Sommeil +30 ] risque d'événement
+- Terres Corrompues uniquement : risques élevés
+- Si Faim <= 20 ET aucune nourriture dans inventaire : propose un choix pour trouver à manger
+- Si Santé <= 20 : propose un choix pour se soigner
+- Si Sommeil <= 20 : narration plus sombre, hallucinations légères
 
 
-150-300 mots par réponse (400 max scènes intenses).
+=== INVENTAIRE ===
+RÈGLE ABSOLUE : Quand le joueur obtient un objet, tu DOIS écrire exactement : [ NomObjet ajouté à l'inventaire ]
+RÈGLE ABSOLUE : Quand le joueur consomme un objet, tu DOIS écrire exactement : [ NomObjet retiré de l'inventaire ]
+Ne jamais inventer d'autres formats. Toujours utiliser ces formats exacts.
+Exemples corrects :
+[ Pain de seigle ajouté à l'inventaire ]
+[ Potion de soin ajoutée à l'inventaire ]
+[ Pain de seigle retiré de l'inventaire ]
+
+
 Phrases courtes=action, longues=atmosphère. Détail sensoriel concret dans chaque description.
 Stats APRÈS narration : [ Force +1 ] [ +50 XP ] [ Niveau 2 ] [ +15 Pièces ]
 Fracturés : phrases brisées, jamais clairs.
@@ -567,18 +579,40 @@ function parseResp(text) {
   if(G.p.survie.sante<=0||G.p.survie.faim<=0||G.p.survie.sommeil<=0) {
     setTimeout(()=>triggerDeath(G.p.survie.sante<=0?'santé':G.p.survie.faim<=0?'faim':'épuisement'),500);
   }
-  // Parsing inventaire
+  // Parsing inventaire — tous les formats possibles
+  if(!G.p.inventaire) G.p.inventaire=[];
+
+  // Format 1 : [Épée ajoutée à l'inventaire]
   text=text.replace(/\[\s*([^\]]+?)\s*ajoutée?\s*à\s*l['']inventaire\s*\]/gi,(_,it)=>{
     const item=it.trim();
     if(!G.p.inventaire.includes(item)){G.p.inventaire.push(item);}
     upd.push(`[${item}→inv]`);return '';
   });
-  // Aussi détecter format alternatif : [Objet obtenu] ou [+Objet]
-  text=text.replace(/\[\s*(?:Objet obtenu|obtenu)\s*:\s*([^\]]+)\s*\]/gi,(_,it)=>{
-    if(!G.p.inventaire)G.p.inventaire=[];
+  // Format 2 : [Objet obtenu : Épée]
+  text=text.replace(/\[\s*(?:Objet obtenu|Obtenu|obtenu)\s*:\s*([^\]]+)\s*\]/gi,(_,it)=>{
     const item=it.trim();
     if(!G.p.inventaire.includes(item)){G.p.inventaire.push(item);}
     upd.push(`[${item}→inv]`);return '';
+  });
+  // Format 3 : [+Épée] ou [+ Épée]
+  text=text.replace(/\[\s*\+\s*([A-Za-zÀ-ÿ][^\]]{2,40})\s*\]/g,(f,it)=>{
+    const item=it.trim();
+    // Éviter de confondre avec XP, Pièces, stats
+    if(/xp|pièces|éclats|force|agilité|intelligence|endurance|perception|volonté|faim|santé|sommeil/i.test(item)) return f;
+    if(!G.p.inventaire.includes(item)){G.p.inventaire.push(item);}
+    upd.push(`[${item}→inv]`);return '';
+  });
+  // Format 4 : [Épée → inventaire] ou [Épée -> inventaire]
+  text=text.replace(/\[\s*([^\]]+?)\s*[→\->]+\s*inventaire\s*\]/gi,(_,it)=>{
+    const item=it.trim();
+    if(!G.p.inventaire.includes(item)){G.p.inventaire.push(item);}
+    upd.push(`[${item}→inv]`);return '';
+  });
+  // Retrait d'objet de l'inventaire
+  text=text.replace(/\[\s*([^\]]+?)\s*retiré[e]?\s*de\s*l['']inventaire\s*\]/gi,(_,it)=>{
+    const item=it.trim();
+    G.p.inventaire=G.p.inventaire.filter(i=>i.toLowerCase()!==item.toLowerCase());
+    upd.push(`[${item}✗inv]`);return '';
   });
 
   let ch='';
