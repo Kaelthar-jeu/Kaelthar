@@ -396,16 +396,20 @@ function showResume(j) {
     <div class="resume-row"><span class="resume-label">Lieu</span><span class="resume-value">${j.lieu}</span></div>
     <div class="resume-row"><span class="resume-label">Absent depuis</span><span class="resume-value">${abs}</span></div>`;
   document.getElementById('resume-screen').style.display='flex';
-  document.getElementById('btn-continue').onclick=()=>{
-    document.getElementById('resume-screen').style.display='none';
-    updateUI(); sendMessage(`Je reprends mon aventure après ${abs} d'absence. Je suis ${G.p.nom}, ${G.p.classe} niveau ${G.p.niveau}, à ${G.lieu}. Que s'est-il passé pendant mon absence ?`);
-  };
-  document.getElementById('btn-new').onclick=async()=>{
-    resetStats(G.p.classe); G.joueurId=null;
-    try { G.joueurId = await dbCreate(); } catch(e){}
-    document.getElementById('resume-screen').style.display='none';
-    updateUI(); sendFirst();
-  };
+document.getElementById('btn-continue').onclick = () => {
+    document.getElementById('resume-screen').style.display = 'none';
+
+    // Sécurité anti-mort après absence
+    G.p.survie = {
+        faim: Math.max(40, G.p.survie.faim),
+        sante: Math.max(30, G.p.survie.sante),
+        sommeil: Math.max(40, G.p.survie.sommeil)
+    };
+
+    updateUI();
+
+    sendMessage(`Je reprends mon aventure après ${abs} d'absence. Je suis ${G.p.nom}, ${G.p.classe} niveau ${G.p.niveau}, à ${G.lieu}. Que s'est-il passé pendant mon absence ?`);
+};
 }
 
 // ---- UI ----
@@ -520,7 +524,7 @@ RÈGLE ABSOLUE : Quand le joueur dit "J'utilise [objet]", tu DOIS :
 2. Appliquer les effets logiques : nourriture → [ Faim +40 ], potion de soin → [ Santé +40 ], poison sur ennemi → combat, etc.
 3. Toujours écrire [ NomObjet retiré de l'inventaire ] après utilisation
 4. Si l'objet ne peut pas être utilisé dans ce contexte précis, expliquer pourquoi de façon narrative
-
+5. Si le joueur est Draconide et utilise le Feu Draconique : décrire TOUJOURS l'effet physique visible (chaleur, flammes, fumée, brûlure dans les veines). Si le SANG augmente ou diminue, l'expliquer dans la narration. Ne jamais modifier SANG sans description physique.
 
 RÈGLE ABSOLUE : Quand le joueur consomme un objet, tu DOIS écrire exactement : [ NomObjet retiré de l'inventaire ]
 Ne jamais inventer d'autres formats. Toujours utiliser ces formats exacts.
@@ -700,19 +704,32 @@ function triggerDeath(cause) {
   // Réinitialise la survie
   G.p.survie = {faim:30, sante:20, sommeil:30};
   updateUI();
-  const story = document.getElementById('story');
-  const entry = document.createElement('div');
-  entry.className = 'story-entry';
-  entry.style.borderLeft = '3px solid #e74c3c';
-  entry.style.paddingLeft = '16px';
-  entry.innerHTML = `
-    <p style="color:#e74c3c;font-size:18px;font-weight:bold;letter-spacing:2px;">✖ TU ES MORT</p>
-    <p><em>Cause : ${cause === 'faim' ? 'La faim t\'a consumé de l\'intérieur.' : cause === 'santé' ? 'Tes blessures ont eu raison de toi.' : 'L\'épuisement t\'a terrassé dans ton sommeil.'}</em></p>
-    <p><em>Tu te réveilles à ${G.lieu}. Affaibli. Diminué. Mais vivant.</em></p>
-    <p style="color:var(--gold);font-size:12px;">[ -${niveauPerdu} niveau${niveauPerdu>1?'x':''} ] [ Objets perdus ] [ Survie critique ]</p>`;
-  story.appendChild(entry);
-  story.scrollTop = entry.offsetTop - 20;
-  autoSave();
+ const story = document.getElementById('story');
+
+// Supprime la dernière entrée (qui contient les choix)
+const entries = story.querySelectorAll('.story-entry');
+if(entries.length > 0) entries[entries.length-1].remove();
+
+const entry = document.createElement('div');
+entry.className = 'story-entry';
+entry.style.borderLeft = '3px solid #e74c3c';
+entry.style.paddingLeft = '16px';
+
+entry.innerHTML = `
+<p style="color:#e74c3c;font-size:18px;font-weight:bold;letter-spacing:2px;">✖ TU ES MORT</p>
+<p><em>Cause : ${cause === 'faim'
+  ? "La faim t'a consumé de l'intérieur."
+  : cause === 'santé'
+  ? "Tes blessures ont eu raison de toi."
+  : "L'épuisement t'a terrassé dans ton sommeil."}</em></p>
+<p><em>Tu te réveilles à ${G.lieu}. Affaibli. Diminué. Mais vivant.</em></p>
+<p style="color:var(--gold);font-size:12px;">[ -${niveauPerdu} niveau${niveauPerdu>1?'x':''} ] [ Objets perdus ] [ Survie critique ]</p>
+`;
+
+story.appendChild(entry);
+story.scrollTop = entry.offsetTop - 20;
+
+autoSave();
 }
 
 function toggleInv(){
