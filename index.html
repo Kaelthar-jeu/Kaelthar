@@ -526,14 +526,17 @@ async function streamMsg(msg){
       body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,stream:true,system:buildSP(),messages:G.history})
     });
     if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||`Erreur ${res.status}`);}
-    const reader=res.body.getReader();const dec=new TextDecoder();
+    const reader=res.body.getReader();const dec=new TextDecoder('utf-8',{fatal:false});
+    let buffer='';
     while(true){
       const {done,value}=await reader.read();if(done)break;
-      for(const line of dec.decode(value).split('\n')){
-        if(line.startsWith('data: ')){
-          const d=line.slice(6);if(d==='[DONE]')continue;
-          try{const p=JSON.parse(d);if(p.type==='content_block_delta'&&p.delta?.text){full+=p.delta.text;sp.textContent=full;sp.appendChild(cur);}}catch(e){}
-        }
+      buffer+=dec.decode(value,{stream:true});
+      const lines=buffer.split('\n');
+      buffer=lines.pop();
+      for(const line of lines){
+        if(!line.startsWith('data: '))continue;
+        const d=line.slice(6).trim();if(d==='[DONE]')continue;
+        try{const p=JSON.parse(d);if(p.type==='content_block_delta'&&p.delta?.text){full+=p.delta.text;sp.textContent=full;sp.appendChild(cur);}}catch(e){}
       }
     }
     cur.remove();
