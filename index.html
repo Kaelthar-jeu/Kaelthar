@@ -502,7 +502,12 @@ function parseResp(text){
   if(cm){
     text=text.replace(cm[0],'').trim();
     const ls=cm[0].split('\n').filter(l=>/^\d[\s—\-]/.test(l.trim()));
-    if(ls.length){ch=`<div class="choices"><div class="choices-title">Que fais-tu ?</div>${ls.map(l=>{const t=l.replace(/^\d\s*[—\-]\s*/,'').trim();return `<button class="choice-btn" onclick="sendChoice('${t.replace(/'/g,"\\'")}')">${l.trim()}</button>`;}).join('')}</div>`;}
+    if(ls.length){
+      window._choix=ls.map(l=>l.replace(/^\d\s*[—\-]\s*/,'').trim());
+      ch='<div class="choices"><div class="choices-title">Que fais-tu ?</div>'+
+        window._choix.map((t,i)=>`<button class="choice-btn" onclick="sendChoix(${i})">${ls[i].trim()}</button>`).join('')+
+        '</div>';
+    }
   }
   updateUI();
   const ps=text.trim().split(/\n+/).filter(l=>l.trim()).map(l=>`<p>${l.trim()}</p>`).join('');
@@ -538,6 +543,11 @@ async function streamMsg(msg){
         const d=line.slice(6).trim();if(d==='[DONE]')continue;
         try{const p=JSON.parse(d);if(p.type==='content_block_delta'&&p.delta?.text){full+=p.delta.text;sp.textContent=full;sp.appendChild(cur);}}catch(e){}
       }
+    }
+    // Traiter le reste du buffer si non vide
+    if(buffer.startsWith('data: ')){
+      const d=buffer.slice(6).trim();
+      try{const p=JSON.parse(d);if(p.type==='content_block_delta'&&p.delta?.text){full+=p.delta.text;}}catch(e){}
     }
     cur.remove();
     G.history.push({role:'assistant',content:full});
@@ -618,6 +628,7 @@ function triggerMoment(n){
   const entry=document.createElement('div');entry.className='story-entry';entry.style.borderLeft='2px solid var(--red)';entry.style.paddingLeft='16px';
   entry.innerHTML=scenes[n];story.appendChild(entry);story.scrollTop=entry.offsetTop-20;autoSave();
 }
+function sendChoix(i){const t=window._choix&&window._choix[i];if(t)sendMessage(t);}
 function sendChoice(t){sendMessage(t);}
 async function sendFirst(){await sendMessage(`Je commence mon aventure. Je suis ${G.p.nom}, ${G.p.classe} de niveau 1. Je me réveille dans les ruines de Valdrek.`);}
 document.getElementById('send-btn').addEventListener('click',()=>sendMessage(document.getElementById('player-input').value));
