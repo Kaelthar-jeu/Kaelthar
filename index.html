@@ -467,14 +467,14 @@ function parseResp(text){
   });
   text=text.replace(/\[\s*\+(\d+)\s*Pièces[^\]]*\]/gi,(_,v)=>{G.p.pieces+=parseInt(v);upd.push(`[+${v} Pièces]`);return '';});
   text=text.replace(/\[\s*\+(\d+)\s*Éclats[^\]]*\]/gi,(_,v)=>{G.p.eclats+=parseInt(v);upd.push(`[+${v} Éclats]`);return '';});
-  text=text.replace(/\[\s*Faim\s*([+\-])(\d+)\s*\]/gi,(_,op,v)=>{
-    const val=parseInt(v);G.p.survie.faim=Math.max(0,Math.min(100,G.p.survie.faim+(op==='-'?-val:val)));upd.push(`[Faim${op}${val}]`);return '';
+  text=text.replace(/\[\s*Faim\s*([+\-\u2014\u2013])(\d+)\s*\]/gi,(_,op,v)=>{
+    const val=parseInt(v);G.p.survie.faim=Math.max(0,Math.min(100,G.p.survie.faim+(op==='-'||op==='—'||op==='–'?-val:val)));upd.push(`[Faim${op}${val}]`);return '';
   });
-  text=text.replace(/\[\s*Sant[ée]\s*([+\-])(\d+)\s*\]/gi,(_,op,v)=>{
-    const val=parseInt(v);G.p.survie.sante=Math.max(0,Math.min(100,G.p.survie.sante+(op==='-'?-val:val)));upd.push(`[Santé${op}${val}]`);return '';
+  text=text.replace(/\[\s*Sant[ée]\s*([+\-\u2014\u2013])(\d+)\s*\]/gi,(_,op,v)=>{
+    const val=parseInt(v);G.p.survie.sante=Math.max(0,Math.min(100,G.p.survie.sante+(op==='-'||op==='—'||op==='–'?-val:val)));upd.push(`[Santé${op}${val}]`);return '';
   });
-  text=text.replace(/\[\s*Sommeil\s*([+\-])(\d+)\s*\]/gi,(_,op,v)=>{
-    const val=parseInt(v);G.p.survie.sommeil=Math.max(0,Math.min(100,G.p.survie.sommeil+(op==='-'?-val:val)));upd.push(`[Sommeil${op}${val}]`);return '';
+  text=text.replace(/\[\s*Sommeil\s*([+\-\u2014\u2013])(\d+)\s*\]/gi,(_,op,v)=>{
+    const val=parseInt(v);G.p.survie.sommeil=Math.max(0,Math.min(100,G.p.survie.sommeil+(op==='-'||op==='—'||op==='–'?-val:val)));upd.push(`[Sommeil${op}${val}]`);return '';
   });
   if(G.p.survie.sante<=0||G.p.survie.faim<=0||G.p.survie.sommeil<=0){
     setTimeout(()=>triggerDeath(G.p.survie.sante<=0?'santé':G.p.survie.faim<=0?'faim':'épuisement'),500);
