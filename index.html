@@ -414,7 +414,11 @@ Contexte : Seul survivant du massacre. Épéiste=ancien garde, Mage=érudit fiss
 === SURVIE ===
 Faim:${p.survie?p.survie.faim:100}/100 | Santé:${p.survie?p.survie.sante:100}/100 | Sommeil:${p.survie?p.survie.sommeil:100}/100
 RÈGLES SURVIE :
-- Chaque scène : [ Faim -5 ] [ Sommeil -3 ] maximum — jamais plus sans raison narrative
+RÈGLE ABSOLUE : Tu DOIS écrire les balises survie à la fin de CHAQUE scène, sans exception. Ces balises mettent à jour l'affichage du joueur. Si tu ne les écris pas, les barres ne bougent pas.
+- Chaque scène SANS EXCEPTION : écrire [ Faim -X ] et [ Sommeil -X ] même si la valeur ne change que de 1
+- Scène normale : [ Faim -5 ] [ Sommeil -3 ]
+- Scène de repos/calme : [ Faim -3 ] [ Sommeil -2 ]
+- Scène intense/combat : [ Faim -8 ] [ Sommeil -5 ]
 - Combat difficile : [ Santé -15 ] maximum
 - RÈGLE ABSOLUE : Si nourriture dans inventaire, ne peut PAS mourir de faim — consomme automatiquement
 - RÈGLE ABSOLUE : Faim et Sommeil ne perdent jamais plus de 20 points par scène
@@ -560,13 +564,6 @@ async function streamMsg(msg){
     cur.remove();
     G.history.push({role:'assistant',content:full});
     if(G.history.length>20)G.history=G.history.slice(-20);
-    // FIX survie : descente automatique faim/sommeil a chaque scene cote JS
-    if(!G.firstScene){
-      const fd=Math.floor(3+Math.random()*4);
-      const sd=Math.floor(2+Math.random()*3);
-      G.p.survie.faim=Math.max(0,G.p.survie.faim-fd);
-      G.p.survie.sommeil=Math.max(0,G.p.survie.sommeil-sd);
-    }
     G.firstScene=false;
     entry.innerHTML=parseResp(full);
     autoSave();
