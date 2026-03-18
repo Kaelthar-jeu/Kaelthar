@@ -36,7 +36,7 @@
     .faction-row{display:flex;justify-content:space-between;font-size:11px;padding:2px 0;color:var(--text-dim);}
     .faction-status{font-size:11px;}
     .fn{color:var(--text-dim);} .fa{color:#69db7c;} .fe{color:var(--red-light);}
-    .game-panel{flex:1;display:flex;flex-direction:column;min-width:0;gap:12px;}
+    .game-panel{flex:1;display:flex;flex-direction:column;min-width:0;}
 
 /* Panneau déroulant Kaelthar */
 .kl-panel-btn{background:none;border:1px solid var(--border);color:var(--text-dim);font-family:var(--mono);font-size:10px;padding:4px 10px;cursor:pointer;transition:all 0.2s;letter-spacing:1px;border-radius:3px;}
@@ -53,7 +53,7 @@
 .kl-inv-item{font-size:10px;color:var(--text-dim);padding:1px 0;border-bottom:1px solid var(--border);}
 .kl-fac-row{display:flex;justify-content:space-between;font-size:10px;padding:1px 0;}
 @media(max-width:600px){.kl-inner{grid-template-columns:1fr 1fr;}}
-    #story{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:20px 24px;overflow-y:auto;min-height:calc(100svh - 120px);}
+    #story{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:20px 24px;overflow-y:auto;min-height:calc(100svh - 80px);padding-bottom:90px;}
     .story-entry{margin-bottom:20px;animation:fadeIn 0.4s ease;}
     @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
     .story-entry p{margin-bottom:8px;font-size:19px;line-height:1.8;color:var(--text);}
@@ -66,7 +66,14 @@
     .story-sep{border:none;border-top:1px solid var(--border);margin:16px 0;opacity:0.4;}
     .cursor{display:inline-block;width:2px;height:16px;background:var(--red-light);animation:blink-c 0.7s infinite;vertical-align:text-bottom;margin-left:2px;}
     @keyframes blink-c{0%,50%{opacity:1;}51%,100%{opacity:0;}}
-    .input-area{display:flex;gap:10px;flex-shrink:0;}
+    .input-area{
+  display:flex;gap:10px;flex-shrink:0;
+  position:fixed;bottom:0;left:0;right:0;
+  background:var(--bg);border-top:1px solid var(--border);
+  padding:10px 16px;z-index:100;
+  max-width:1100px;margin:0 auto;
+  box-sizing:border-box;
+}
     #player-input{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:var(--font);font-size:15px;padding:12px 16px;resize:none;height:56px;outline:none;transition:border-color 0.2s;}
     #player-input:focus{border-color:var(--red);}
     #player-input::placeholder{color:var(--text-dim);font-style:italic;}
@@ -123,7 +130,8 @@
       .main{flex-direction:column;gap:8px;padding:8px 0;}
 
       #story{min-height:300px;max-height:52vh;padding:14px;}
-      .input-area{gap:6px;}
+      .input-area{gap:6px;padding:8px 10px;}
+      #story{padding-bottom:80px;}
       #player-input{font-size:14px;padding:10px 12px;height:48px;}
       #send-btn{padding:0 16px;font-size:13px;}
       .choice-btn{font-size:14px;padding:10px 12px;}
