@@ -53,10 +53,10 @@
 .kl-inv-item{font-size:10px;color:var(--text-dim);padding:1px 0;border-bottom:1px solid var(--border);}
 .kl-fac-row{display:flex;justify-content:space-between;font-size:10px;padding:1px 0;}
 @media(max-width:600px){.kl-inner{grid-template-columns:1fr 1fr;}}
-    #story{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:20px 24px;overflow-y:auto;min-height:calc(100vh - 160px);}
+    #story{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:20px 24px;overflow-y:auto;min-height:calc(100svh - 120px);}
     .story-entry{margin-bottom:20px;animation:fadeIn 0.4s ease;}
     @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
-    .story-entry p{margin-bottom:8px;font-size:22px;line-height:1.8;color:var(--text);}
+    .story-entry p{margin-bottom:8px;font-size:19px;line-height:1.8;color:var(--text);}
     .player-action{color:var(--text-dim);font-style:italic;font-size:14px;margin-bottom:12px;padding-left:12px;border-left:2px solid var(--border);}
     .stat-update{font-family:var(--mono);font-size:12px;color:var(--gold);margin-top:8px;padding:6px 10px;background:rgba(201,168,76,0.08);border-left:2px solid var(--gold);border-radius:2px;}
     .choices{margin-top:14px;padding:12px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;}
@@ -378,6 +378,26 @@ function resetStats(classe){
   G.arc="Arc I — Les Cendres de l'Éveil";G.acte="Acte 1 — Ce Qui Reste";G.lieu="Ruines de Valdrek";G.history=[];G.firstScene=true;
 }
 let selClass=null;
+// Pré-remplir depuis dernière session
+(function(){
+  try {
+    const last = JSON.parse(localStorage.getItem('kaelthar_last_session')||'{}');
+    if(last.nom){
+      const inp=document.getElementById('player-name-input');
+      if(inp)inp.value=last.nom;
+    }
+    if(last.apiKey){
+      const ki=document.getElementById('api-key-input');
+      if(ki)ki.value=last.apiKey;
+    }
+    if(last.classe){
+      setTimeout(()=>{
+        const card=document.querySelector(`.class-card[data-class="${last.classe}"]`);
+        if(card){card.click();}
+      },100);
+    }
+  } catch(e){}
+})();
 document.querySelectorAll('.class-card').forEach(c=>c.addEventListener('click',()=>{
   document.querySelectorAll('.class-card').forEach(x=>x.classList.remove('selected'));c.classList.add('selected');selClass={nom:c.dataset.class,stat:c.dataset.stat};
 }));
@@ -387,6 +407,7 @@ document.getElementById('start-btn').addEventListener('click',async()=>{
   if(!k){alert('Entre ta clé API.');return;}if(!n){alert('Entre ton nom.');return;}if(!selClass){alert('Choisis une classe.');return;}
   const btn=document.getElementById('start-btn');btn.disabled=true;btn.textContent='Chargement...';
   G.apiKey=k;G.p.nom=n;G.p.classe=selClass.nom;G.p.sig_nom=selClass.stat;resetStats(selClass.nom);
+  localStorage.setItem('kaelthar_last_session',JSON.stringify({nom:n,classe:selClass.nom,apiKey:k}));
   try{const ex=await dbLoad(n,selClass.nom);if(ex&&ex.historique&&ex.historique.length>0){fromDB(ex);document.getElementById('setup-screen').style.display='none';showResume(ex);return;}}catch(e){}
   try{G.joueurId=await dbCreate();}catch(e){}
   document.getElementById('setup-screen').style.display='none';updateUI();sendFirst();
