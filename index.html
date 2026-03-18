@@ -20,8 +20,8 @@
     .save-ind{font-size:11px;color:var(--text-dim);font-family:var(--mono);}
     .save-ind.saving{color:var(--gold);}
     .save-ind.saved{color:#69db7c;}
-    .main{display:flex;flex:1;gap:16px;padding:16px 0;min-height:0;}
-    .stats-panel{width:220px;flex-shrink:0;background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:16px;position:sticky;top:0;max-height:calc(100vh - 80px);}
+    .main{display:block;flex:1;padding:16px 0;min-height:0;}
+    .stats-panel{display:none;}
     .panel-title{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--red);border-bottom:1px solid var(--border);padding-bottom:8px;}
     .stat-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:3px 0;}
     .stat-label{color:var(--text-dim);font-size:12px;}
@@ -37,10 +37,26 @@
     .faction-status{font-size:11px;}
     .fn{color:var(--text-dim);} .fa{color:#69db7c;} .fe{color:var(--red-light);}
     .game-panel{flex:1;display:flex;flex-direction:column;min-width:0;gap:12px;}
-    #story{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:24px;overflow-y:auto;min-height:0;}
+
+/* Panneau déroulant Kaelthar */
+.kl-panel-btn{background:none;border:1px solid var(--border);color:var(--text-dim);font-family:var(--mono);font-size:10px;padding:4px 10px;cursor:pointer;transition:all 0.2s;letter-spacing:1px;border-radius:3px;}
+.kl-panel-btn:hover{border-color:var(--red-light);color:var(--gold);}
+#kl-panel{display:none;background:var(--bg2);border-bottom:1px solid var(--border);padding:14px 0;}
+#kl-panel.open{display:block;}
+.kl-inner{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;}
+.kl-title{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--red);border-bottom:1px solid var(--border);padding-bottom:5px;margin-bottom:8px;font-family:var(--mono);}
+.kl-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:12px;}
+.kl-lbl{color:var(--text-dim);}
+.kl-val{color:var(--gold);font-family:var(--mono);font-weight:bold;font-size:12px;}
+.kl-bar-wrap{background:var(--bg3);height:3px;margin-top:2px;margin-bottom:4px;overflow:hidden;border-radius:1px;}
+.kl-bar{height:100%;background:var(--red);transition:width 0.4s ease;}
+.kl-inv-item{font-size:11px;color:var(--text-dim);padding:2px 0;border-bottom:1px solid var(--border);}
+.kl-fac-row{display:flex;justify-content:space-between;font-size:11px;padding:2px 0;}
+@media(max-width:600px){.kl-inner{grid-template-columns:1fr 1fr;}}
+    #story{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:24px;overflow-y:auto;min-height:calc(100vh - 200px);}
     .story-entry{margin-bottom:20px;animation:fadeIn 0.4s ease;}
     @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
-    .story-entry p{margin-bottom:10px;font-size:15px;line-height:1.8;color:var(--text);}
+    .story-entry p{margin-bottom:10px;font-size:21px;line-height:1.85;color:var(--text);}
     .player-action{color:var(--text-dim);font-style:italic;font-size:14px;margin-bottom:12px;padding-left:12px;border-left:2px solid var(--border);}
     .stat-update{font-family:var(--mono);font-size:12px;color:var(--gold);margin-top:8px;padding:6px 10px;background:rgba(201,168,76,0.08);border-left:2px solid var(--gold);border-radius:2px;}
     .choices{margin-top:14px;padding:12px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;}
@@ -105,8 +121,7 @@
     @media(max-width:700px){
       #app{padding:0 8px;}
       .main{flex-direction:column;gap:8px;padding:8px 0;}
-      .stats-panel{width:100%;max-height:220px;overflow-y:auto;flex-direction:row;flex-wrap:wrap;gap:8px;padding:10px;}
-      .stats-panel > div{min-width:120px;flex:1;}
+
       #story{min-height:300px;max-height:52vh;padding:14px;}
       .input-area{gap:6px;}
       #player-input{font-size:14px;padding:10px 12px;height:48px;}
@@ -174,8 +189,72 @@
   <header>
     <div class="logo">Kaelthar</div>
     <div class="tagline">« Le monde ne t'attend pas. Il te teste. »</div>
-    <div class="save-ind" id="save-ind">● prêt</div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="save-ind" id="save-ind">● prêt</div>
+      <button class="kl-panel-btn" onclick="toggleKlPanel()">Personnage ▾</button>
+    </div>
   </header>
+
+  <!-- Panneau déroulant -->
+  <div id="kl-panel">
+    <div class="kl-inner">
+
+      <div>
+        <div class="kl-title">Identité</div>
+        <div id="kl-classe" style="font-size:13px;color:var(--red-light);font-weight:bold;margin-bottom:6px;">—</div>
+        <div style="text-align:center;">
+          <div style="font-size:32px;font-weight:bold;color:var(--red-light);font-family:var(--mono);line-height:1;" id="kl-niveau">1</div>
+          <div style="font-size:10px;color:var(--text-dim);letter-spacing:2px;">NIVEAU</div>
+        </div>
+        <div class="kl-row" style="margin-top:8px;"><span class="kl-lbl">XP</span><span class="kl-val" id="kl-xp">0/100</span></div>
+        <div class="kl-bar-wrap"><div class="kl-bar" id="kl-xp-bar" style="background:var(--gold);width:0%;"></div></div>
+        <div class="kl-row"><span class="kl-lbl">Pièces</span><span class="kl-val" id="kl-pieces">0</span></div>
+        <div class="kl-row"><span class="kl-lbl">Éclats</span><span class="kl-val" id="kl-eclats">0</span></div>
+      </div>
+
+      <div>
+        <div class="kl-title">Stats</div>
+        <div class="kl-row"><span class="kl-lbl">Force</span><span class="kl-val" id="kl-force">10</span></div>
+        <div class="kl-bar-wrap"><div class="kl-bar" id="kl-force-bar" style="width:50%;"></div></div>
+        <div class="kl-row"><span class="kl-lbl">Agilité</span><span class="kl-val" id="kl-agilite">10</span></div>
+        <div class="kl-bar-wrap"><div class="kl-bar" id="kl-agilite-bar" style="width:50%;"></div></div>
+        <div class="kl-row"><span class="kl-lbl">Intelligence</span><span class="kl-val" id="kl-intelligence">10</span></div>
+        <div class="kl-bar-wrap"><div class="kl-bar" id="kl-intelligence-bar" style="width:50%;"></div></div>
+        <div class="kl-row"><span class="kl-lbl">Endurance</span><span class="kl-val" id="kl-endurance">10</span></div>
+        <div class="kl-bar-wrap"><div class="kl-bar" id="kl-endurance-bar" style="width:50%;"></div></div>
+        <div class="kl-row"><span class="kl-lbl">Perception</span><span class="kl-val" id="kl-perception">10</span></div>
+        <div class="kl-bar-wrap"><div class="kl-bar" id="kl-perception-bar" style="width:50%;"></div></div>
+        <div class="kl-row"><span class="kl-lbl">Volonté</span><span class="kl-val" id="kl-volonte">10</span></div>
+        <div class="kl-bar-wrap"><div class="kl-bar" id="kl-volonte-bar" style="width:50%;"></div></div>
+      </div>
+
+      <div>
+        <div class="kl-title">Survie</div>
+        <div class="kl-row"><span class="kl-lbl">❤ Santé</span><span class="kl-val" id="kl-sante">100</span></div>
+        <div class="kl-bar-wrap"><div class="kl-bar" id="kl-sante-bar" style="width:100%;background:#c0392b;"></div></div>
+        <div class="kl-row"><span class="kl-lbl">🍖 Faim</span><span class="kl-val" id="kl-faim">100</span></div>
+        <div class="kl-bar-wrap"><div class="kl-bar" id="kl-faim-bar" style="width:100%;background:#c9a84c;"></div></div>
+        <div class="kl-row"><span class="kl-lbl">😴 Sommeil</span><span class="kl-val" id="kl-sommeil">100</span></div>
+        <div class="kl-bar-wrap"><div class="kl-bar" id="kl-sommeil-bar" style="width:100%;background:#4a9eda;"></div></div>
+        <div class="kl-title" style="margin-top:10px;">Stat Signature</div>
+        <div class="kl-row"><span class="kl-lbl" id="kl-sig-lbl">—</span><span class="kl-val" id="kl-sig">5</span></div>
+        <div class="kl-bar-wrap"><div class="kl-bar" id="kl-sig-bar" style="width:10%;background:var(--gold);"></div></div>
+      </div>
+
+      <div>
+        <div class="kl-title">Inventaire</div>
+        <div id="kl-inventaire"><div style="font-size:11px;color:var(--text-dim);font-style:italic;">Vide</div></div>
+        <div class="kl-title" style="margin-top:10px;">Factions</div>
+        <div class="kl-fac-row"><span>Ordre du Seuil</span><span id="kl-f-ordre" style="color:var(--text-dim);">Neutre</span></div>
+        <div class="kl-fac-row"><span>Enfants Fissure</span><span id="kl-f-enfants" style="color:var(--text-dim);">Neutre</span></div>
+        <div class="kl-fac-row"><span>Confrérie</span><span id="kl-f-confrerie" style="color:var(--text-dim);">Neutre</span></div>
+        <div class="kl-fac-row"><span>Érrants</span><span id="kl-f-errants" style="color:var(--text-dim);">Neutre</span></div>
+        <div class="kl-fac-row"><span>Conseil</span><span id="kl-f-conseil" style="color:var(--text-dim);">Neutre</span></div>
+      </div>
+
+    </div>
+  </div>
+
   <div class="main">
     <div class="stats-panel">
       <div>
@@ -334,8 +413,38 @@ function showResume(j){
     document.getElementById('resume-screen').style.display='none';updateUI();sendFirst();
   };
 }
+function toggleKlPanel(){
+  const p=document.getElementById('kl-panel');
+  const b=document.querySelector('.kl-panel-btn');
+  p.classList.toggle('open');
+  if(b)b.textContent=p.classList.contains('open')?'Personnage ▴':'Personnage ▾';
+}
+
+function setKl(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
+function setKlW(id,w,col){const e=document.getElementById(id);if(e){e.style.width=Math.min(100,w)+'%';if(col)e.style.background=col;}}
+function setKlFac(id,v){const e=document.getElementById(id);if(!e)return;e.textContent=v;e.style.color=v==='Allié'?'#69db7c':v==='Ennemi'?'var(--red-light)':'var(--text-dim)';}
+
 function updateUI(){
   const p=G.p;
+  // Nouveau panneau
+  setKl('kl-classe',p.classe);
+  setKl('kl-niveau',p.niveau);
+  setKl('kl-xp',p.xp+'/'+p.xp_req);
+  setKlW('kl-xp-bar',Math.min(100,(p.xp/p.xp_req)*100));
+  setKl('kl-pieces',p.pieces);
+  setKl('kl-eclats',p.eclats);
+  ['force','agilite','intelligence','endurance','perception','volonte'].forEach(s=>{
+    setKl('kl-'+s,p.st[s]);
+    setKlW('kl-'+s+'-bar',Math.min(100,(p.st[s]/20)*100));
+  });
+  const sv=p.survie||{faim:100,sante:100,sommeil:100};
+  setKl('kl-sante',sv.sante);setKlW('kl-sante-bar',sv.sante,sv.sante>50?'#c0392b':sv.sante>25?'#e67e22':'#e74c3c');
+  setKl('kl-faim',sv.faim);setKlW('kl-faim-bar',sv.faim,sv.faim>50?'#c9a84c':sv.faim>25?'#e67e22':'#e74c3c');
+  setKl('kl-sommeil',sv.sommeil);setKlW('kl-sommeil-bar',sv.sommeil,sv.sommeil>50?'#4a9eda':sv.sommeil>25?'#e67e22':'#e74c3c');
+  setKl('kl-sig-lbl',p.sig_nom);setKl('kl-sig',p.sig);setKlW('kl-sig-bar',Math.min(100,p.sig*2));
+  const invKl=document.getElementById('kl-inventaire');
+  if(invKl)invKl.innerHTML=p.inventaire&&p.inventaire.length?p.inventaire.map(it=>`<div class="kl-inv-item">▸ ${it}</div>`).join(''):'<div style="font-size:11px;color:var(--text-dim);font-style:italic;">Vide</div>';
+  setKlFac('kl-f-ordre',p.fac.ordre);setKlFac('kl-f-enfants',p.fac.enfants);setKlFac('kl-f-confrerie',p.fac.confrerie);setKlFac('kl-f-errants',p.fac.errants);setKlFac('kl-f-conseil',p.fac.conseil);
   document.getElementById('class-display').textContent=p.classe;
   document.getElementById('level-display').textContent=p.niveau;
   document.getElementById('xp-display').textContent=`${p.xp}/${p.xp_req}`;
@@ -352,7 +461,6 @@ function updateUI(){
   document.getElementById('sig-bar').style.width=`${Math.min(100,p.sig*2)}%`;
   document.getElementById('pieces').textContent=p.pieces;
   document.getElementById('eclats').textContent=p.eclats;
-  const sv=p.survie||{faim:100,sante:100,sommeil:100};
   document.getElementById('sv-sante').textContent=sv.sante;
   document.getElementById('sv-sante-bar').style.width=sv.sante+'%';
   document.getElementById('sv-sante-bar').style.background=sv.sante>50?'#c0392b':sv.sante>25?'#e67e22':'#e74c3c';
