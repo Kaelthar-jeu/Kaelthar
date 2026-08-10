@@ -135,7 +135,6 @@
   <a href="https://recitgames.vercel.app" style="color:#7a756a;font-size:12px;text-decoration:none;letter-spacing:2px;font-family:Georgia,serif;">&#9664; RÉCIT GAMES</a>
 </div>
 
-<!-- SETUP -->
 <div id="setup-screen">
   <div class="setup-box">
     <div class="setup-title">Kaelthar</div>
@@ -166,11 +165,10 @@
       </div>
     </div>
     <button class="setup-btn" id="start-btn">Entrer dans Kaelthar</button>
-    <div class="api-note" style="font-size:11px;color:var(--text-dim);text-align:center;margin-top:16px;font-style:italic;">Ta progression est sauvegardée automatiquement après chaque action.</div>
+    <div style="font-size:11px;color:var(--text-dim);text-align:center;margin-top:16px;font-style:italic;">Ta progression est sauvegardée automatiquement après chaque action.</div>
   </div>
 </div>
 
-<!-- REPRISE -->
 <div id="resume-screen" style="display:none;">
   <div class="resume-box">
     <div class="resume-title">Kaelthar</div>
@@ -183,7 +181,6 @@
   </div>
 </div>
 
-<!-- APP -->
 <div id="app">
   <header>
     <div class="logo">Kaelthar</div>
@@ -194,7 +191,6 @@
     </div>
   </header>
 
-  <!-- Panneau déroulant -->
   <div id="kl-panel">
     <div class="kl-inner">
       <div>
@@ -539,7 +535,24 @@ Agilité >= 13 : un choix discret/rapide
 Intelligence >= 13 : un choix d'analyse/ruse
 Perception >= 13 : le joueur remarque des détails cachés
 Stat Signature ${p.sig_nom} >= 8 : toujours un choix qui l'utilise
-Choix en fin : [ CHOIX ]\\n1 — option\\n2 — option\\n3 — option (max 3, jamais de bonne réponse évidente)
+
+=== FORMAT CHOIX — RÈGLE ABSOLUE ET NON NÉGOCIABLE ===
+Chaque réponse DOIT se terminer par exactement ce bloc, sans exception, sans variation :
+
+[ CHOIX ]
+1 — texte du premier choix
+2 — texte du deuxième choix
+3 — texte du troisième choix
+
+INTERDICTIONS STRICTES :
+- Ne JAMAIS omettre le bloc [ CHOIX ]
+- Ne JAMAIS utiliser autre chose que le tiret long — (—) entre le numéro et le texte
+- Ne JAMAIS numéroter autrement que 1, 2, 3
+- Ne JAMAIS mettre de texte après les 3 choix sauf les balises système (survie, inventaire, stats, PAYWALL)
+- Les balises [ Faim ] [ Santé ] [ Sommeil ] [ PAYWALL ] vont TOUJOURS après les 3 choix, jamais avant
+- Ne JAMAIS reformater, résumer ou modifier cette structure
+- Jamais de bonne réponse évidente parmi les 3 choix
+
 COHÉRENCE ABSOLUE : ne jamais contredire l'historique.
 
 === PAYWALL ===
@@ -586,9 +599,7 @@ function parseResp(text){
   text=text.replace(/\[\s*([^\]]+?)\s*retiré[e]?\s*de\s*l['']inventaire\s*\]/gi,(_,it)=>{
     const item=it.trim();G.p.inventaire=G.p.inventaire.filter(i=>i.toLowerCase()!==item.toLowerCase());upd.push(`[${item}✗inv]`);return '';
   });
-  // Paywall
   if(!G.adminMode&&/\[\s*PAYWALL\s*\]/i.test(text)){text=text.replace(/\[\s*PAYWALL\s*\]/gi,'');setTimeout(declencherPaywall,600);}
-  // Choix
   let ch='';
   const cm=text.match(/\[\s*CHOIX\s*\]([\s\S]*?)(?=\n\n|\n\[|$)/i);
   if(cm){
@@ -607,7 +618,6 @@ function parseResp(text){
   return ps+su+ch;
 }
 
-// ── PAYWALL & CODE ──
 function declencherPaywall(){
   addStory(`<div style="border:2px solid var(--gold);padding:20px;margin:8px 0;text-align:center;background:rgba(212,168,83,0.06);">
     <p style="font-family:var(--mono);font-size:11px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:10px;">— Accès limité —</p>
@@ -658,7 +668,6 @@ async function validerCode(){
   }
 }
 
-// ── STREAMING via proxy Vercel ──
 async function streamMsg(msg){
   G.history.push({role:'user',content:msg});
   const story=document.getElementById('story');
